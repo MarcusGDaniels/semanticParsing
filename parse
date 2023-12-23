@@ -1,0 +1,86 @@
+#!/bin/sh
+
+if test -z "$2"; then
+  echo Usage: $0 sentence 'sentence#'
+  exit 1
+fi
+sentence="$1"
+sentenceNumber="$2"
+
+python3 parse.py "$sentence" 2>/dev/null | tr "'" '"' | tr -d '\n' > _mrs_input${sentenceNumber}.m
+
+cat _mrs_input${sentenceNumber}.m | sed -e 's/psoa(//g' -e 's/rel(//g' -e 's/attrval(//g' -e 's/"[^"]*"//g' -e 's/hcons(//' -e 's/qeq(//g' | tr -d '[' | tr -d ']' | tr -d ')' | sed -e 's/,,/,/g' -e 's/,,/,/g' | tr ',' '\n' | sort -k1.2 -n | uniq > vars${sentenceNumber}
+
+echo ' { print "define(" $1 "," $1' "\"s${sentenceNumber}\"" '")dnl" } ' > _mrs_rename${sentenceNumber}.awk
+gawk -f _mrs_rename${sentenceNumber}.awk < vars${sentenceNumber} > _mrs_renames${sentenceNumber}
+
+m4 > gen${sentenceNumber}.m << EOF
+:- module gen${sentenceNumber}.
+:- interface.
+:- import_module io.
+:- pred main(io::di, io::uo) is det.
+
+:- implementation.
+
+:- import_module io.
+:- import_module list.
+
+:- import_module mrs.
+:- import_module sentence_vars_event${sentenceNumber}.
+:- import_module sentence_vars_handle${sentenceNumber}.
+:- import_module sentence_vars_inst${sentenceNumber}.
+:- import_module sentence_vars_indiv${sentenceNumber}.
+:- import_module sentence_vars_unknown${sentenceNumber}.
+:- import_module sentence_boilerplate.
+
+include(_mrs_renames${sentenceNumber})
+
+main(!IO) :-
+   X = include(_mrs_input${sentenceNumber}.m),
+   print_boilerplate_interface(${sentenceNumber},!IO),
+   psoa(_,_,Rels,_) = X,
+   io.print(relationDeclarations(Rels),!IO),
+   print_boilerplate_implementation(${sentenceNumber},!IO),
+   io.nl(!IO),
+   io.print(to_string(X),!IO).
+
+EOF
+
+for var_type in e h i u x; do
+if test $var_type = e; then
+  var_typeName=event
+elif test $var_type = h; then
+  var_typeName=handle
+elif test $var_type = x; then
+  var_typeName=inst
+elif test $var_type = i; then
+  var_typeName=indiv
+elif test $var_type = u; then
+  var_typeName=unknown
+fi
+
+cat > sentence_vars_${var_typeName}${sentenceNumber}.m << EOF
+:- module sentence_vars_${var_typeName}${sentenceNumber}.
+:- interface.
+EOF
+
+if grep -q "^${var_type}" vars${sentenceNumber}; then
+  echo :- import_module mrs. >> sentence_vars_${var_typeName}${sentenceNumber}.m 
+fi
+
+for var in `cat vars${sentenceNumber} | grep "^${var_type}"`; do
+  echo :- func ${var}s${sentenceNumber} = mrs_${var_typeName}. >> sentence_vars_${var_typeName}${sentenceNumber}.m
+done
+
+echo :- implementation. >> sentence_vars_${var_typeName}${sentenceNumber}.m
+
+for var in `cat vars${sentenceNumber} | grep "^${var_type}"`; do
+  echo "${var}s${sentenceNumber} = mrs_${var_typeName}(\"${var}s${sentenceNumber}\")." >> sentence_vars_${var_typeName}${sentenceNumber}.m
+done
+
+done
+
+rm -f gen${sentenceNumber}
+
+mmc --make gen${sentenceNumber}
+./gen${sentenceNumber} > sentence${sentenceNumber}.m

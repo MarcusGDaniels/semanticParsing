@@ -1,0 +1,2 @@
+#!/bin/sh
+./parse "Abrams chased Browne." 0

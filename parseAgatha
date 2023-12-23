@@ -1,0 +1,15 @@
+./parse "Someone who lives in Dreadbury Mansion killed Aunt Agatha." 0
+./parse "Agatha, the butler, and Charles live in Dreadbury Mansion, and are the only people who live therein." 1
+./parse "A killer always hates his victim, and is never richer than his victim." 2
+./parse "Charles hates no one that Aunt Agatha hates." 3
+./parse "Agatha hates everyone except the butler." 4
+./parse "The butler hates everyone not richer than Aunt Agatha." 5
+./parse "The butler hates everyone Aunt Agatha hates." 6
+./parse "No one hates everyone." 7
+./parse "Agatha is not the butler." 8
+./parse "Therefore : Agatha killed herself." 9
+
+mmc --make genMaster
+genMaster > calls.m
+
+mmc --make testSentences

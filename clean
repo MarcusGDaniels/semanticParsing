@@ -1,0 +1,18 @@
+#!/bin/sh
+rm -f sentence_vars*
+rm -f sentence[0-9]*
+rm -f vars[0-9]
+rm -f _mrs_input*
+rm -f gen[0-9]*
+rm -f *.mh
+rm -f *.c
+rm -f *.o
+rm -f *.err
+rm -f *.d
+rm -f *.c_date
+rm -rf Mercury
+rm -f test1
+rm -f _mrs_rename[0-9]*.awk _mrs_renames _mrs_renames[0-9]*
+rm -f genMaster
+rm -f testSentences
+rm -f calls.m
