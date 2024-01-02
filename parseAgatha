@@ -1,3 +1,6 @@
+#!/bin/sh
+
+export PATH=.:$PATH
 ./parse "Someone who lives in Dreadbury Mansion killed Aunt Agatha." 0
 ./parse "Agatha, the butler, and Charles live in Dreadbury Mansion, and are the only people who live therein." 1
 ./parse "A killer always hates his victim, and is never richer than his victim." 2
