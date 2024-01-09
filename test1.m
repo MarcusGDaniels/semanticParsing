@@ -20,7 +20,7 @@ main(!IO) :-
   L = solutions(pred(Rstr::out) is nondet :- proper_q(_,_,Rstr,_)),
   mrs_rstr_handle(H0) = list.det_head(list.det_tail(L)),
   io.print(H0,!IO),
-  (RelHandle - P) = det_head(multi_map.lookup(handleMap,mrs_rel_handle(H0))),
+  {RelHandle,_,_,P} = det_head(multi_map.lookup(handleMap,mrs_rel_handle(H0))),
   (if pred_named(P0) = P then
      solutions(pred(C::out) is nondet :- named(RelHandle,I,C),L2),
      io.print(det_head(L2),!IO)

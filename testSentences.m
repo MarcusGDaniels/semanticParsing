@@ -29,29 +29,29 @@ collectRelations(RelHandle) = L :-
 unpackRelation(RelHandle,Pred,IoIn,IoOut) :-
   if pred_therein_p_dir(_) = Pred then
     io.print("therein_p_dir(",IoIn,Io0),
-    solutions(pred(E1::out) is nondet :- therein_p_dir(RelHandle,E1,E2), E1L),
-    solutions(pred(E2::out) is nondet :- therein_p_dir(RelHandle,E1,E2), E2L),
+    solutions(pred(E1::out) is nondet :- therein_p_dir(RelHandle,E1,_), E1L),
+    solutions(pred(E2::out) is nondet :- therein_p_dir(RelHandle,_,E2), E2L),
     io.print({E1L,E2L},Io0,Io1),
     io.print(")",Io1,Io2),
     io.nl(Io2,IoOut)
   else if pred_live_v_1(_) = Pred then
     io.print("live_v_1(",IoIn,Io0),
-    solutions(pred(E::out) is nondet :- live_v_1(RelHandle,E,Inst), EL),
-    solutions(pred(Inst::out) is nondet :- live_v_1(RelHandle,E,Inst), IL),
+    solutions(pred(E::out) is nondet :- live_v_1(RelHandle,E,_), EL),
+    solutions(pred(Inst::out) is nondet :- live_v_1(RelHandle,_,Inst), IL),
     io.print({EL,IL},Io0,Io1),
     io.print(")",Io1,Io2),
     io.nl(Io2,IoOut)
   else if pred_people_n_of(_) = Pred then
     io.print("people_n_of",IoIn,Io0),
-    solutions(pred(Inst::out) is nondet :- people_n_of(RelHandle,Inst,Indiv), InstL),
-    solutions(pred(Indiv::out) is nondet :- people_n_of(RelHandle,Inst,Indiv), IndivL),
+    solutions(pred(Inst::out) is nondet :- people_n_of(RelHandle,Inst,_), InstL),
+    solutions(pred(Indiv::out) is nondet :- people_n_of(RelHandle,_,Indiv), IndivL),
     io.print({InstL,IndivL},Io0,Io1),
     io.print(")",Io1,Io2),
     io.nl(Io2,IoOut)
   else if pred_only_a_1(_) = Pred then
     io.print("only_a_1",IoIn,Io0),
-    solutions(pred(E::out) is nondet :- only_a_1(RelHandle,E,Inst), EL),
-    solutions(pred(Inst::out) is nondet :- only_a_1(RelHandle,E,Inst), IL),
+    solutions(pred(E::out) is nondet :- only_a_1(RelHandle,E,_), EL),
+    solutions(pred(Inst::out) is nondet :- only_a_1(RelHandle,_,Inst), IL),
     io.print({EL,IL},Io0,Io1),
     io.print(")",Io1,Io2),
     io.nl(Io2,IoOut)
@@ -60,7 +60,7 @@ unpackRelation(RelHandle,Pred,IoIn,IoOut) :-
 		   
 
 main(!IO) :-
-  solutions(pred(RelHandle::out) is nondet :- only_a_1(RelHandle,E,A), Handles),
+  solutions(pred(RelHandle::out) is nondet :- only_a_1(RelHandle,_,_), Handles),
   list.foldl(pred(RelHandle::in,IoIn::di,IoOut::uo) is det :- 
     (Preds = collectRelations(RelHandle),
      list.foldl(unpackRelation(RelHandle), Preds, IoIn, IoOut)),

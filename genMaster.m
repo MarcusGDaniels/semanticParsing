@@ -41,10 +41,10 @@ printDefn(Pair,!IO) :-
   io.nl(!IO),
   io.print("  ( ",!IO),
   io.nl(!IO),
-  Len = list.length(sentences.sentence_list),
+  Len = list.length(sentences.sentences),
   L = ranges.to_sorted_list(ranges.range(0,Len-1)),
   list.foldl2(pred(SentenceIndex::in,CountIn::in,CountOut::out,IoIn::di,IoOut::uo) is det :- 
-    (PsoaPost = list.det_index0(sentences.sentence_list,SentenceIndex),
+    (PsoaPost = list.det_index0(sentences.sentences,SentenceIndex),
      (if checkIntersection(Pair,PsoaPost) then
        (if CountIn = 0 then
          io.print("     ",IoIn,IoOut0)
@@ -71,14 +71,14 @@ printSentenceImport(SentenceIndex,!IO) :-
   io.nl(!IO).
 
 main(!IO) :-
-  list.foldl(pred(PsoaPost::in,SetIn::in,SetOut::out) is det :- SetOut = collectSetForSentence(PsoaPost,SetIn),sentences.sentence_list,set.init,All),
+  list.foldl(pred(PsoaPost::in,SetIn::in,SetOut::out) is det :- SetOut = collectSetForSentence(PsoaPost,SetIn),sentences.sentences,set.init,All),
 
   io.print(":- module calls.\n",!IO),
   io.print(":- interface.\n", !IO),
   io.print(":- import_module mrs.\n", !IO),
   set.foldl(pred({C,D}::in,IoIn::di,IoOut::uo) is det :- printDecl(D,IoIn,IoOut),All,!IO),
   io.print(":- implementation.\n", !IO),
-  Len = list.length(sentences.sentence_list),
+  Len = list.length(sentences.sentences),
   L = ranges.to_sorted_list(ranges.range(0,Len-1)),
   list.foldl(printSentenceImport,L,!IO),
   set.foldl(pred(Pair::in,IoIn::di,IoOut::uo) is det :- printDefn(Pair,IoIn,IoOut),All,!IO).

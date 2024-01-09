@@ -37,6 +37,5 @@ print_boilerplate_implementation(SentenceNumber,!IO) :-
    io.print(":- import_module sentence_vars_unknown",!IO),
    io.print(SentenceNumber,!IO),
    io.print(".\n",!IO),
-   io.print(":- import_module sentence_accessors.\n",!IO),
    io.print(":- import_module map.\n",!IO),
    io.print(":- import_module list.\n",!IO).

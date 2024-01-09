@@ -22,7 +22,6 @@ m4 > gen${sentenceNumber}.m << EOF
 
 :- implementation.
 
-:- import_module io.
 :- import_module list.
 
 :- import_module mrs.
