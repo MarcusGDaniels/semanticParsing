@@ -97,27 +97,37 @@ unpackRelation(MM,RelHandle,Pred,IoIn,IoOut) :-
   else if pred_never_a_1(_) = Pred then
     io.print("never_a_1(",IoIn,Io0),
     solutions(pred(Indiv::out) is nondet :- never_a_1(RelHandle,Indiv,_), IL),
-    solutions(pred(Refs::out) is nondet :- (never_a_1(RelHandle,_,Handle),
-                                                      multi_map.lookup(MM,mrs_rel_handle(Handle),Refs)),
-        HL),
+    solutions(pred(Ret::out) is nondet :-
+       (never_a_1(RelHandle,_,H),
+        multi_map.lookup(MM,mrs_rel_handle(H),Refs),
+        Ret = list.map(func({RelHandle,_,_,Preds}) = Val is det :- Val = {RelHandle,Preds}, Refs)),
+       HL),
     io.print({IL,HL},Io0,Io1),
     io.print(")",Io1,Io2),
     io.nl(Io2,IoOut)
   else if pred_neg(_) = Pred then
     io.print("neg(",IoIn,Io0),
     solutions(pred(Event::out) is nondet :- neg(RelHandle,Event,_), EL),
-    solutions(pred(Handle::out) is nondet :- neg(RelHandle,_,Handle), HL),
+    solutions(pred(Ret::out) is nondet :-
+       (neg(RelHandle,_,H),
+        multi_map.lookup(MM,mrs_rel_handle(H),Refs),
+        Ret = list.map(func({RelHandle,_,_,Preds}) = Val is det :- Val = {RelHandle,Preds}, Refs)),
+       HL),
     io.print({EL,HL},Io0,Io1),
     io.print(")",Io1,Io2),
     io.nl(Io2,IoOut)
   else if pred_colon_p_namely(_) = Pred then
     io.print("colon_p_namely(",IoIn,Io0),
     solutions(pred(Event::out) is nondet :- colon_p_namely(RelHandle,Event,_,_), EL),
-    solutions(pred(Refs::out) is nondet :- (colon_p_namely(RelHandle,_,H1,_),
-                                                           multi_map.lookup(MM,mrs_rel_handle(H1),Refs)),
+    solutions(pred(Ret::out) is nondet :-
+       (colon_p_namely(RelHandle,_,H1,_),
+        multi_map.lookup(MM,mrs_rel_handle(H1),Refs),
+        Ret = list.map(func({RelHandle,_,_,Preds}) = Val is det :- Val = {RelHandle,Preds}, Refs)),
        H1L),
-    solutions(pred(Refs::out) is nondet :- (colon_p_namely(RelHandle,_,_,H2),
-                                                           multi_map.lookup(MM,mrs_rel_handle(H2),Refs)),
+    solutions(pred(Ret::out) is nondet :-
+       (colon_p_namely(RelHandle,_,_,H2),
+        multi_map.lookup(MM,mrs_rel_handle(H2),Refs),
+        Ret = list.map(func({RelHandle,_,_,Preds}) = Val is det :- Val = {RelHandle,Preds}, Refs)),
        H2L),
     io.print({EL,H1L,H2L},Io0,Io1),
     io.print(")",Io1,Io2),
