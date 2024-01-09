@@ -78,7 +78,7 @@
 		 ; pred_aunt_n_of(pred(out,out, out) is nondet)
 		 ; pred_therein_p_dir(pred(out,out,out) is nondet)
 		 ; pred_only_a_1(pred(out,out) is nondet)
-		 ; pred_neg(pred(out,out) is nondet)
+		 ; pred_neg(pred(out,out,out) is nondet)
 		 ; pred_always_a_1(pred(out,out) is nondet)
 		 ; pred_never_a_1(pred(out,out) is nondet)
 		 ; pred_therefore_a_1(pred(out,out) is nondet)
