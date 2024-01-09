@@ -9,7 +9,8 @@
 :- import_module list.
 :- import_module multi_map.
 :- import_module sentences.
-:- import_module sentence_accessors.
+:- import_module sentence_predicates.
+:- import_module sentence_types.
 
 :- import_module solutions.
 

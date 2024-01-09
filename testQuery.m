@@ -7,7 +7,7 @@
 :- import_module mrs.
 :- import_module list.
 :- import_module sentences.
-:- import_module sentence_accessors.
+:- import_module sentence_predicates.
 
 main(!IO) :-
   io.print(det_head(sentences.sentences),!IO),

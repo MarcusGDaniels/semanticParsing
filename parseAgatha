@@ -12,6 +12,24 @@ export PATH=.:$PATH
 ./parse "Agatha is not the butler." 8
 ./parse "Therefore : Agatha killed herself." 9
 
+(cat << EOF
+:- module sentences.
+:- interface.
+:- import_module sentence_types.
+:- import_module list.
+:- func sentences = list(mrs_psoa_post).
+:- implementation.
+EOF
+
+for i in `seq 0 9`; do
+  echo ":- import_module sentence$i."
+done
+echo -n "sentences = [sentence0.root"
+for i in `seq 1 9`; do
+  echo -n ",sentence$i.root"
+done
+echo "].") > sentences.m
+
 mmc --make genMaster
 genMaster > calls.m
 

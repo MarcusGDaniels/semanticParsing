@@ -1,6 +1,6 @@
 :- module sentences.
 :- interface.
-:- import_module sentence_accessors.
+:- import_module sentence_types.
 :- import_module list.
 :- func sentences = list(mrs_psoa_post).
 :- implementation.

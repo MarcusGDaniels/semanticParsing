@@ -1,4 +1,4 @@
-:- module sentence_accessors.
+:- module sentence_predicates.
 :- interface.
 :- import_module mrs.
 :- import_module multi_map.
@@ -87,8 +87,6 @@
 		 ; pred_poss(pred(out,out,out,out) is nondet)
 		 ; pred_except_p(pred(out,out,out,out) is nondet)
 		 ; pred_colon_p_namely(pred(out,out,out,out) is nondet).
-
-:- type mrs_psoa_post ---> psoa_post(mrs_handle,mrs_event,multi_map(mrs_rel_handle,{mrs_rel_handle,string,string,preds})).
 
 :- implementation.
 

@@ -9,7 +9,7 @@
 :- import_module sentence_vars_event0.
 :- import_module sentence_vars_handle0.
 :- import_module sentence_vars_inst0.
-:- import_module sentence_accessors.
+:- import_module sentence_predicates.
 
 :- import_module solutions.
 :- import_module list.
