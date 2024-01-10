@@ -407,14 +407,18 @@ unpackRelation(RelMap,RelHandle,Pred,IoIn,IoOut) :-
     io.print(Pred,IoIn,IoOut),
     error("unknown predicate").
 
-:- pred processSentence(mrs_psoa_post,
-                        multi_map(mrs_types, mrs_rel_handle),
-			multi_map(mrs_types, mrs_rel_handle)).
-:- mode processSentence(in,in,out) is det.
-processSentence(Sentence,ArgMapIn,ArgMapOut) :-
+:- pred loadArgMapForSentence(mrs_psoa_post,
+                              multi_map(mrs_types, mrs_rel_handle),
+		              multi_map(mrs_types, mrs_rel_handle)).
+:- mode loadArgMapForSentence(in,in,out) is det.
+loadArgMapForSentence(Sentence,ArgMapIn,ArgMapOut) :-
   psoa_post(TopHandle,Event,RelMap) = Sentence,
   expandArgMap(RelMap,ArgMapIn,ArgMapOut).
 
+:- func loadArgMap = multi_map(mrs_types, mrs_rel_handle).
+loadArgMap = ArgMap :-
+  list.foldl(loadArgMapForSentence,sentences.sentences,multi_map.init,ArgMap).
+
 main(!IO) :-
-  list.foldl(processSentence,sentences.sentences,multi_map.init,ArgMap),
+  ArgMap = loadArgMap,
   io.print(ArgMap,!IO).
