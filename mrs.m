@@ -38,10 +38,10 @@
                         ; rel_no_q(mrs_rel_handle, mrs_inst, mrs_rstr_handle, mrs_body_handle)
                         ; rel_live_v_1(mrs_rel_handle, mrs_event, mrs_inst)
                         ; rel_only_a_1(mrs_rel_handle, mrs_event, mrs_inst)
-                        ; rel_neg(mrs_rel_handle, mrs_event, mrs_handle)
+                        ; rel_neg(mrs_rel_handle, mrs_event, mrs_rel_handle)
                         ; rel_always_a_1(mrs_rel_handle, mrs_indiv, mrs_event)
-                        ; rel_never_a_1(mrs_rel_handle, mrs_indiv, mrs_handle)
-                        ; rel_therefore_a_1(mrs_rel_handle, mrs_indiv, mrs_handle)
+                        ; rel_never_a_1(mrs_rel_handle, mrs_indiv, mrs_rel_handle)
+                        ; rel_therefore_a_1(mrs_rel_handle, mrs_indiv, mrs_rel_handle)
                         ; rel_rich_a_in(mrs_rel_handle, mrs_event, mrs_inst, mrs_indiv)
                         ; rel_more_comp(mrs_rel_handle, mrs_event, mrs_event, mrs_inst)
                         ; rel_named(mrs_rel_handle, mrs_inst, mrs_carg)
@@ -63,7 +63,7 @@
 			; rel_killer_n_1(mrs_rel_handle, mrs_inst)
 			; rel_therein_p_dir(mrs_rel_handle, mrs_event, mrs_event)
 			; rel_except_p(mrs_rel_handle, mrs_event, mrs_inst, mrs_inst)
-			; rel_colon_p_namely(mrs_rel_handle, mrs_event, mrs_handle, mrs_handle).
+			; rel_colon_p_namely(mrs_rel_handle, mrs_event, mrs_rel_handle, mrs_rel_handle).
 
 :- type mrs_rel_qeq_t ---> mrs_rel_qeq(h1 :: mrs_rel_handle,h2 :: mrs_rel_handle).
 :- type mrs_hcons ---> hcons(list(mrs_rel_qeq_t)).
@@ -292,7 +292,7 @@ rel(Key,Handle,Args) = Ret :-
  ; Key = "neg",
       attr_event(_,Arg0) = det_index0(Args,0),
       attr_handle(_,Arg1) = det_index0(Args,1),
-      Ret = rel_neg(mrs_rel_handle(Handle),Arg0,Arg1)
+      Ret = rel_neg(mrs_rel_handle(Handle),Arg0,mrs_rel_handle(Arg1))
  ; Key = "_always_a_1",
       attr_indiv(_,Arg0) = det_index0(Args,0),
       attr_event(_,Arg1) = det_index0(Args,1),
@@ -300,11 +300,11 @@ rel(Key,Handle,Args) = Ret :-
  ; Key = "_never_a_1",
       attr_indiv(_,Arg0) = det_index0(Args,0),
       attr_handle(_,Arg1) = det_index0(Args,1),
-      Ret = rel_never_a_1(mrs_rel_handle(Handle),Arg0,Arg1)
+      Ret = rel_never_a_1(mrs_rel_handle(Handle),Arg0,mrs_rel_handle(Arg1))
  ; Key = "_therefore_a_1",
       attr_indiv(_,Arg0) = det_index0(Args,0),
       attr_handle(_,Arg1) = det_index0(Args,1),
-      Ret = rel_therefore_a_1(mrs_rel_handle(Handle),Arg0,Arg1)
+      Ret = rel_therefore_a_1(mrs_rel_handle(Handle),Arg0,mrs_rel_handle(Arg1))
  ; Key = "_rich_a_in",
       attr_event(_,Arg0) = det_index0(Args,0),
       attr_inst(_,Arg1) = det_index0(Args,1),
@@ -388,7 +388,7 @@ rel(Key,Handle,Args) = Ret :-
       attr_event(_,Arg0) = det_index0(Args,0),
       attr_handle(_,Arg1) = det_index0(Args,1),
       attr_handle(_,Arg2) = det_index0(Args,2),
-      Ret = rel_colon_p_namely(mrs_rel_handle(Handle),Arg0,Arg1,Arg2)
+      Ret = rel_colon_p_namely(mrs_rel_handle(Handle),Arg0,mrs_rel_handle(Arg1),mrs_rel_handle(Arg2))
  ; error(string.join_list(",",["impossible0",Key]))
  ).
 
@@ -433,14 +433,14 @@ rel_to_string(Val) = Ret :-
      Ret = string.append_list(["live_v_1(",to_string(RelHandle),",",to_string(Event),",",to_string(Inst),").\n"])
    ; rel_only_a_1(RelHandle, Event, Inst) = Val,
      Ret = string.append_list(["only_a_1(",to_string(RelHandle),",",to_string(Event),",",to_string(Inst),").\n"])
-   ; rel_neg(RelHandle, Event, Handle) = Val,
-     Ret = string.append_list(["neg(",to_string(RelHandle),",",to_string(Event),",",to_string(Handle),").\n"])
+   ; rel_neg(RelHandle, Event, RelHandle0) = Val,
+     Ret = string.append_list(["neg(",to_string(RelHandle),",",to_string(Event),",",to_string(RelHandle0),").\n"])
    ; rel_always_a_1(RelHandle, Indiv, Event) = Val,
      Ret = string.append_list(["always_a_1(",to_string(RelHandle),",",to_string(Indiv),",",to_string(Event),").\n"])
-   ; rel_never_a_1(RelHandle, Indiv, Handle) = Val,
-     Ret = string.append_list(["never_a_1(",to_string(RelHandle),",",to_string(Indiv),",",to_string(Handle),").\n"])
-   ; rel_therefore_a_1(RelHandle, Indiv, Handle) = Val,
-     Ret = string.append_list(["therefore_a_1(",to_string(RelHandle),",",to_string(Indiv),",",to_string(Handle),").\n"])
+   ; rel_never_a_1(RelHandle, Indiv, RelHandle0) = Val,
+     Ret = string.append_list(["never_a_1(",to_string(RelHandle),",",to_string(Indiv),",",to_string(RelHandle0),").\n"])
+   ; rel_therefore_a_1(RelHandle, Indiv, RelHandle0) = Val,
+     Ret = string.append_list(["therefore_a_1(",to_string(RelHandle),",",to_string(Indiv),",",to_string(RelHandle0),").\n"])
    ; rel_rich_a_in(RelHandle, Event, Inst, Indiv) = Val,
      Ret = string.append_list(["rich_a_in(",to_string(RelHandle),",",to_string(Event),",",to_string(Inst),",",to_string(Indiv),").\n"])
    ; rel_more_comp(RelHandle, E1, E2, Inst) = Val,
@@ -483,8 +483,8 @@ rel_to_string(Val) = Ret :-
      Ret = string.append_list(["therein_p_dir(",to_string(RelHandle),",",to_string(E1),",",to_string(E2),").\n"])
    ; rel_except_p(RelHandle, Event, A, B) = Val,
      Ret = string.append_list(["except_p(",to_string(RelHandle),",",to_string(Event),",",to_string(A),",",to_string(B),").\n"])
-   ; rel_colon_p_namely(RelHandle, Event, H1, H2) = Val,
-     Ret = string.append_list(["colon_p_namely(",to_string(RelHandle),",",to_string(Event),",",to_string(H1),",",to_string(H2),").\n"])
+   ; rel_colon_p_namely(RelHandle, Event, RelHandle0, RelHandle1) = Val,
+     Ret = string.append_list(["colon_p_namely(",to_string(RelHandle),",",to_string(Event),",",to_string(RelHandle0),",",to_string(RelHandle1),").\n"])
    ; error("impossible1")).
 
 :- func rel_to_call(mrs_rel_t) = string.
@@ -521,13 +521,13 @@ rel_to_call(Val) = Ret :-
    ; rel_only_a_1(_, _, _) = Val,
      Ret = string.append_list(["only_a_1(","RelHandle",",","Event",",","Inst",")"])
    ; rel_neg(_, _, _) = Val,
-     Ret = string.append_list(["neg(","RelHandle",",","Event",",","Handle",")"])
+     Ret = string.append_list(["neg(","RelHandle",",","Event",",","RelHandle0",")"])
    ; rel_always_a_1(_, _, _) = Val,
      Ret = string.append_list(["always_a_1(","RelHandle",",","Indiv",",","Event",")"])
    ; rel_never_a_1(_, _, _) = Val,
-     Ret = string.append_list(["never_a_1(","RelHandle",",","Indiv",",","Handle",")"])
+     Ret = string.append_list(["never_a_1(","RelHandle",",","Indiv",",","RelHandle0",")"])
    ; rel_therefore_a_1(_, _, _) = Val,
-     Ret = string.append_list(["therefore_a_1(","RelHandle",",","Indiv",",","Handle",")"])
+     Ret = string.append_list(["therefore_a_1(","RelHandle",",","Indiv",",","RelHandle0",")"])
    ; rel_rich_a_in(_, _, _, _) = Val,
      Ret = string.append_list(["rich_a_in(","RelHandle",",","Event",",","Inst",",","Indiv",")"])
    ; rel_more_comp(_, _, _, _) = Val,
@@ -571,7 +571,7 @@ rel_to_call(Val) = Ret :-
    ; rel_except_p(_, _, _, _) = Val,
      Ret = string.append_list(["except_p(","RelHandle",",","Event",",","A",",","B",")"])
    ; rel_colon_p_namely(_, _, _, _) = Val,
-     Ret = string.append_list(["colon_p_namely(","RelHandle",",","Event",",","H1",",","H2",")"])
+     Ret = string.append_list(["colon_p_namely(","RelHandle",",","Event",",","RelHandle0",",","RelHandle1",")"])
    ; error("impossible1")).
 
 :- func rel_handle(mrs_rel_t) = mrs_rel_handle.
@@ -812,16 +812,16 @@ rel_to_decl_string(Val) = Ret :-
      Ret = string.append_list([":- pred only_a_1(mrs_rel_handle, mrs_event, mrs_inst).\n",
                                ":- mode only_a_1(out,out,out) is nondet.\n"])
    ; rel_neg(_, _, _) = Val,
-     Ret = string.append_list([":- pred neg(mrs_rel_handle, mrs_event, mrs_handle).\n",
+     Ret = string.append_list([":- pred neg(mrs_rel_handle, mrs_event, mrs_rel_handle).\n",
                                ":- mode neg(out,out,out) is nondet.\n"])
    ; rel_always_a_1(_, _, _) = Val,
      Ret = string.append_list([":- pred always_a_1(mrs_rel_handle, mrs_indiv, mrs_event).\n",
                                ":- mode always_a_1(out,out,out) is nondet.\n"])
    ; rel_never_a_1(_, _, _) = Val,
-     Ret = string.append_list([":- pred never_a_1(mrs_rel_handle, mrs_indiv, mrs_handle).\n",
+     Ret = string.append_list([":- pred never_a_1(mrs_rel_handle, mrs_indiv, mrs_rel_handle).\n",
                                ":- mode never_a_1(out,out,out) is nondet.\n"])
    ; rel_therefore_a_1(_, _, _) = Val,
-     Ret = string.append_list([":- pred therefore_a_1(mrs_rel_handle, mrs_indiv, mrs_handle).\n",
+     Ret = string.append_list([":- pred therefore_a_1(mrs_rel_handle, mrs_indiv, mrs_rel_handle).\n",
                                ":- mode therefore_a_1(out,out,out) is nondet.\n"])
    ; rel_rich_a_in(_, _, _, _) = Val,
      Ret = string.append_list([":- pred rich_a_in(mrs_rel_handle, mrs_event, mrs_inst, mrs_indiv).\n",
@@ -887,7 +887,7 @@ rel_to_decl_string(Val) = Ret :-
      Ret = string.append_list([":- pred except_p(mrs_rel_handle, mrs_event, mrs_inst, mrs_inst).\n",
                                ":- mode except_p(out,out,out,out) is nondet.\n"])
    ; rel_colon_p_namely(_, _, _, _) = Val,
-     Ret = string.append_list([":- pred colon_p_namely(mrs_rel_handle, mrs_event, mrs_handle, mrs_handle).\n",
+     Ret = string.append_list([":- pred colon_p_namely(mrs_rel_handle, mrs_event, mrs_rel_handle, mrs_rel_handle).\n",
                                ":- mode colon_p_namely(out,out,out,out) is nondet.\n"])
    ; error("impossible4")).
 
@@ -937,9 +937,9 @@ mkHandleMap(Rels,Hcons) = Ret :-
 :- instance mrs_print(mrs_psoa) where [
   to_string(psoa(H,E,Rels,Hcons)) = 
     string.append_list([mkHandleMap(Rels,Hcons),
-	                "root = psoa_post(",
+	                "root = psoa_post(mrs_rel_handle(",
 		        to_string(H),
-		        ",",
+		        "),",
 		        to_string(E),
 		        ",handleMap).\n"
 			])

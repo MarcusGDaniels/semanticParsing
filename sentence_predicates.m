@@ -35,15 +35,15 @@
 		 ; pred_aunt_n_of(pred(mrs_rel_handle, mrs_inst, mrs_indiv))
 		 ; pred_therein_p_dir(pred(mrs_rel_handle, mrs_event, mrs_event))
 		 ; pred_only_a_1(pred(mrs_rel_handle, mrs_event, mrs_inst))
-		 ; pred_neg(pred(mrs_rel_handle, mrs_event, mrs_handle))
+		 ; pred_neg(pred(mrs_rel_handle, mrs_event, mrs_rel_handle))
 		 ; pred_always_a_1(pred(mrs_rel_handle, mrs_indiv, mrs_event))
-		 ; pred_never_a_1(pred(mrs_rel_handle, mrs_indiv, mrs_handle))
-		 ; pred_therefore_a_1(pred(mrs_rel_handle, mrs_indiv, mrs_handle))
+		 ; pred_never_a_1(pred(mrs_rel_handle, mrs_indiv, mrs_rel_handle))
+		 ; pred_therefore_a_1(pred(mrs_rel_handle, mrs_indiv, mrs_rel_handle))
 		 ; pred_rich_a_in(pred(mrs_rel_handle, mrs_event, mrs_inst, mrs_indiv))
 		 ; pred_more_comp(pred(mrs_rel_handle, mrs_event, mrs_event, mrs_inst))
 		 ; pred_poss(pred(mrs_rel_handle, mrs_event, mrs_inst, mrs_inst))
 		 ; pred_except_p(pred(mrs_rel_handle, mrs_event, mrs_inst, mrs_inst))
-		 ; pred_colon_p_namely(pred(mrs_rel_handle, mrs_event, mrs_handle, mrs_handle)).
+		 ; pred_colon_p_namely(pred(mrs_rel_handle, mrs_event, mrs_rel_handle, mrs_rel_handle)).
 
 :- inst preds for preds/0 ---> 
 	         pred_unknown(pred(out, out, out) is nondet)
