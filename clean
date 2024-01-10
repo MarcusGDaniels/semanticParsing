@@ -16,3 +16,4 @@ rm -f _mrs_rename[0-9]*.awk _mrs_renames _mrs_renames[0-9]*
 rm -f genMaster
 rm -f testSentences
 rm -f calls.m
+rm -f testQuery testSentences agatha
