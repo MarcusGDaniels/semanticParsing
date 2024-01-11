@@ -12,6 +12,8 @@
 
 :- import_module solutions.
 :- import_module list.
+:- import_module string.
+:- import_module set.
 :- import_module multi_map.
 :- import_module pair.
 :- import_module require.
@@ -19,16 +21,43 @@
 
 :- import_module sentence_vars_inst0.
 
-:- pred expandIO(multi_map(mrs_rel_handle,{mrs_rel_handle,string,string,preds}),mrs_rel_handle,io,io).
-:- mode expandIO(in,in,di,uo) is det.
-expandIO(RelMap,RelHandle,!IO) :-
-  (if multi_map.contains(RelMap,RelHandle) then
-    multi_map.lookup(RelMap,RelHandle,Rels),
-    list.foldl(pred({RelHandle0,_,_,Pred}::in,IoIn::di,IoOut::uo) is det :-
-      unpackRelation(RelMap,RelHandle0,Pred,IoIn,IoOut),Rels,!IO)
-   else
-    error("impossible")),
-  io.nl(!IO).
+:- pred expandInstances(mrs_rel_handle,
+                        multi_map(mrs_rel_handle,{mrs_rel_handle,string,string,preds}),
+                        multi_map(mrs_types, mrs_rel_handle),list(mrs_inst),
+			set(string),
+			set(string)).
+:- mode expandInstances(in,in,in,in,in,out).
+expandInstances(RelHandle,RelMap,ArgMap,IL,OutputsIn,OutputsOut) :-
+  list.foldl(pred(Inst::in,OutputsIn0::in,OutputsOut0::out) is det :- 
+    (multi_map.lookup(ArgMap,wrap_inst(Inst),Rels),
+     list.foldl(pred(RelHandle0::in,OutputsIn1::in,OutputsOut1::out) is det :- 
+       (if RelHandle0 = RelHandle then
+         OutputsOut1 = OutputsIn1
+        else
+          multi_map.lookup(RelMap,RelHandle0,Rels0),
+	   list.foldl(pred({RelHandle0Ref,_,_,Pred0}::in,OutputsIn2::in,OutputsOut2::out) is det :- 
+                           unpackRelation(RelMap,ArgMap,RelHandle0Ref,Pred0,OutputsIn2,OutputsOut2),
+	              Rels0, OutputsIn1, OutputsOut1)),
+       Rels,OutputsIn0,OutputsOut0)),IL,OutputsIn,OutputsOut).
+
+:- pred expandEvents(mrs_rel_handle,
+                     multi_map(mrs_rel_handle,{mrs_rel_handle,string,string,preds}),
+                     multi_map(mrs_types, mrs_rel_handle),list(mrs_event),
+                     set(string),
+                     set(string)).
+:- mode expandEvents(in,in,in,in,in,out).
+expandEvents(RelHandle,RelMap,ArgMap,EL,OutputsIn,OutputsOut) :-
+  list.foldl(pred(Event::in,OutputsIn0::in,OutputsOut0::out) is det :- 
+    (multi_map.lookup(ArgMap,wrap_event(Event),Rels),
+     list.foldl(pred(RelHandle0::in,OutputsIn1::in,OutputsOut1::out) is det :- 
+       (if RelHandle0 = RelHandle then
+         OutputsOut1 = OutputsIn1
+        else
+          multi_map.lookup(RelMap,RelHandle0,Rels0),
+	   list.foldl(pred({RelHandle0Ref,_,_,Pred0}::in,OutputsIn2::in,OutputsOut2::out) is det :- 
+                           unpackRelation(RelMap,ArgMap,RelHandle0Ref,Pred0,OutputsIn2,OutputsOut2),
+                      Rels0, OutputsIn1, OutputsOut1)),
+       Rels,OutputsIn0,OutputsOut0)),EL,OutputsIn,OutputsOut).
 
 :- pred expandArgMap(multi_map(mrs_rel_handle,{mrs_rel_handle,string,string,preds}),
                      multi_map(mrs_types, mrs_rel_handle),
@@ -286,125 +315,187 @@ collectArguments(RelMap,RelHandle,Pred,ArgMapIn,ArgMapOut) :-
     impure unsafe_perform_io(print(Pred)),
     error("unknown predicate").
 
-:- pred unpackRelation(multi_map(mrs_rel_handle,{mrs_rel_handle,string,string,preds}),mrs_rel_handle,preds,io,io).
-:- mode unpackRelation(in,in,in,di,uo) is det.
-unpackRelation(RelMap,RelHandle,Pred,IoIn,IoOut) :-
+:- pragma promise_pure(unpackRelation/6).
+:- pred unpackRelation(multi_map(mrs_rel_handle,{mrs_rel_handle,string,string,preds}),
+                       multi_map(mrs_types,mrs_rel_handle),
+                       mrs_rel_handle,preds,
+		       set(string),set(string)).
+:- mode unpackRelation(in,in,in,in,in,out) is det.
+unpackRelation(RelMap,ArgMap,RelHandle,Pred,OutputsIn,OutputsOut) :-
   if pred_therein_p_dir(_) = Pred then
-    io.print("therein_p_dir(",IoIn,Io0),
     solutions(pred(E1::out) is nondet :- therein_p_dir(RelHandle,E1,_), E1L),
     solutions(pred(E2::out) is nondet :- therein_p_dir(RelHandle,_,E2), E2L),
-    io.print({E1L,E2L},Io0,Io1),
-    io.print(")",Io1,Io2),
-    io.nl(Io2,IoOut)
+    E1Str = "{" ++ string.join_list(",",list.map(to_string,E1L)) ++ "}",
+    E2Str = "{" ++ string.join_list(",",list.map(to_string,E2L)) ++ "}",
+    Cmd = "therein_p_dir(" ++ string.join_list(",",[E1Str,E2Str]) ++ ")",
+    OutputsOut = set.insert(OutputsIn,Cmd)
   else if pred_live_v_1(_) = Pred then
-    io.print("live_v_1(",IoIn,Io0),
     solutions(pred(E::out) is nondet :- live_v_1(RelHandle,E,_), EL),
     solutions(pred(Inst::out) is nondet :- live_v_1(RelHandle,_,Inst), IL),
-    io.print({EL,IL},Io0,Io1),
-    io.print(")",Io1,Io2),
-    io.nl(Io2,IoOut)
+    EStr = "{" ++ string.join_list(",",list.map(to_string,EL)) ++ "}",
+    IStr = "{" ++ string.join_list(",",list.map(to_string,IL)) ++ "}",
+    Cmd = "live_v_1(" ++ string.join_list(",",[EStr,IStr]) ++ ")",
+    OutputsOut = set.insert(OutputsIn,Cmd)
   else if pred_people_n_of(_) = Pred then
-    io.print("people_n_of",IoIn,Io0),
     solutions(pred(Inst::out) is nondet :- people_n_of(RelHandle,Inst,_), InstL),
     solutions(pred(Indiv::out) is nondet :- people_n_of(RelHandle,_,Indiv), IndivL),
-    io.print({InstL,IndivL},Io0,Io1),
-    io.print(")",Io1,Io2),
-    io.nl(Io2,IoOut)
+    InstStr = "{" ++ string.join_list(",",list.map(to_string,InstL)) ++ "}",
+    IndivStr = "{" ++ string.join_list(",",list.map(to_string,IndivL)) ++ "}",
+    Cmd = "people_n_of(" ++ string.join_list(",",[InstStr,IndivStr]) ++ ")",
+    OutputsOut = set.insert(OutputsIn,Cmd)
   else if pred_only_a_1(_) = Pred then
-    io.print("only_a_1",IoIn,Io0),
     solutions(pred(E::out) is nondet :- only_a_1(RelHandle,E,_), EL),
     solutions(pred(Inst::out) is nondet :- only_a_1(RelHandle,_,Inst), IL),
-    io.print({EL,IL},Io0,Io1),
-    io.print(")",Io1,Io2),
-    io.nl(Io2,IoOut)
+    EStr = "{" ++ string.join_list(",",list.map(to_string,EL)) ++ "}",
+    IStr = "{" ++ string.join_list(",",list.map(to_string,IL)) ++ "}",
+    Cmd = "only_a_1(" ++ string.join_list(",",[EStr,IStr]) ++ ")",
+    OutputsOut = set.insert(OutputsIn,Cmd)
   else if pred_kill_v_1(_) = Pred then
-    io.print("kill_v_1",IoIn,Io0),
     solutions(pred(E::out) is nondet :- kill_v_1(RelHandle,E,_,_), EL),
     solutions(pred(I1::out) is nondet :- kill_v_1(RelHandle,_,I1,_), I1L),
     solutions(pred(I2::out) is nondet :- kill_v_1(RelHandle,_,_,I2), I2L),
+    ELStr = "{" ++ string.join_list(",",list.map(to_string,EL)) ++ "}",
+    I1Str = "{" ++ string.join_list(",",list.map(to_string,I1L)) ++ "}",
+    I2Str = "{" ++ string.join_list(",",list.map(to_string,I2L)) ++ "}",
+    Cmd = "kill_v_1(" ++ string.join_list(",",[ELStr,I1Str,I2Str]) ++ ")",
+    Outputs0 = set.insert(OutputsIn,Cmd),
 
-    io.print({EL,I1L,I2L},Io0,Io1),
-    io.print(")",Io1,Io2),
-    io.nl(Io2,IoOut)
+    expandEvents(RelHandle,RelMap,ArgMap,EL,Outputs0,Outputs1),
+    expandInstances(RelHandle,RelMap,ArgMap,I1L,Outputs1,Outputs2),
+    expandInstances(RelHandle,RelMap,ArgMap,I2L,Outputs2,OutputsOut)
   else if pred_in_p_loc(_) = Pred then
-    io.print("in_p_loc(",IoIn,Io0),
     solutions(pred(E1::out) is nondet :- in_p_loc(RelHandle,E1,_,_), E1L),
     solutions(pred(E2::out) is nondet :- in_p_loc(RelHandle,_,E2,_), E2L),
     solutions(pred(Inst::out) is nondet :- in_p_loc(RelHandle,_,_,Inst), IL),
-    io.print({E1L,E2L,IL},Io0,Io1),
-    io.print(")",Io1,Io2),
-    io.nl(Io2,IoOut)
+    E1Str = "{" ++ string.join_list(",",list.map(to_string,E1L)) ++ "}",
+    E2Str = "{" ++ string.join_list(",",list.map(to_string,E2L)) ++ "}",
+    IStr = "{" ++ string.join_list(",",list.map(to_string,IL)) ++ "}",
+    Cmd = "in_p_loc(" ++ string.join_list(",",[E1Str,E2Str,IStr]) ++ ")",
+    OutputsOut = set.insert(OutputsIn,Cmd)
   else if pred_and_c_e(_) = Pred then
-    io.print("and_c_e(",IoIn,Io0),
     solutions(pred(E1::out) is nondet :- and_c_e(RelHandle,E1,_,_), E1L),
     solutions(pred(E2::out) is nondet :- and_c_e(RelHandle,_,E2,_), E2L),
     solutions(pred(E3::out) is nondet :- and_c_e(RelHandle,_,_,E3), E3L),
-    io.print({E1L,E2L,E3L},Io0,Io1),
-    io.print(")",Io1,Io2),
-    io.nl(Io2,IoOut)
+    solutions(pred(Inst::out) is nondet :- in_p_loc(RelHandle,_,_,Inst), IL),
+    E1Str = "{" ++ string.join_list(",",list.map(to_string,E1L)) ++ "}",
+    E2Str = "{" ++ string.join_list(",",list.map(to_string,E2L)) ++ "}",
+    E3Str = "{" ++ string.join_list(",",list.map(to_string,E3L)) ++ "}",
+    IStr = "{" ++ string.join_list(",",list.map(to_string,IL)) ++ "}",
+    Cmd = "and_c_e(" ++ string.join_list(",",[E1Str,E2Str,E3Str,IStr]) ++ ")",
+    OutputsOut = set.insert(OutputsIn,Cmd)
   else if pred_be_v_id(_) = Pred then
-    io.print("be_v_id(",IoIn,Io0),
     solutions(pred(E::out) is nondet :- be_v_id(RelHandle,E,_,_), EL),
     solutions(pred(I1::out) is nondet :- be_v_id(RelHandle,_,I1,_), I1L),
     solutions(pred(I2::out) is nondet :- be_v_id(RelHandle,_,_,I2), I2L),
-    io.print({EL,I1L,I2L},Io0,Io1),
-    io.print(")",Io1,Io2),
-    io.nl(Io2,IoOut)
+    E1Str = "{" ++ string.join_list(",",list.map(to_string,EL)) ++ "}",
+    I1Str = "{" ++ string.join_list(",",list.map(to_string,I1L)) ++ "}",
+    I2Str = "{" ++ string.join_list(",",list.map(to_string,I2L)) ++ "}",
+    Cmd = "be_v_id(" ++ string.join_list(",",[E1Str,I1Str,I2Str]) ++ ")",
+    OutputsOut = set.insert(OutputsIn,Cmd)
   else if pred_always_a_1(_) = Pred then
-    io.print("always_a_1(",IoIn,Io0),
-    solutions(pred(Indiv::out) is nondet :- always_a_1(RelHandle,Indiv,_), IL),
+    solutions(pred(Indiv::out) is nondet :- always_a_1(RelHandle,Indiv,_), IndivL),
     solutions(pred(Event::out) is nondet :- always_a_1(RelHandle,_,Event), EL),
-    io.print({IL,EL},Io0,Io1),
-    io.print(")",Io1,Io2),
-    io.nl(Io2,IoOut)
+    IndivStr = "{" ++ string.join_list(",",list.map(to_string,IndivL)) ++ "}",
+    EStr = "{" ++ string.join_list(",",list.map(to_string,EL)) ++ "}",
+    Cmd = "be_v_id(" ++ string.join_list(",",[IndivStr,EStr]) ++ ")",
+    OutputsOut = set.insert(OutputsIn,Cmd)
   else if pred_hate_v_1(_) = Pred then
-    io.print("hate_v_1(",IoIn,Io0),
     solutions(pred(Event::out) is nondet :- hate_v_1(RelHandle,Event,_,_), EL),
     solutions(pred(I1::out) is nondet :- hate_v_1(RelHandle,_,I1,_), I1L),
     solutions(pred(I2::out) is nondet :- hate_v_1(RelHandle,_,I2,_), I2L),
-    io.print({EL,I1L,I2L},Io0,Io1),
-    io.print(")",Io1,Io2),
-    io.nl(Io2,IoOut)
+    E1Str = "{" ++ string.join_list(",",list.map(to_string,EL)) ++ "}",
+    I1Str = "{" ++ string.join_list(",",list.map(to_string,I1L)) ++ "}",
+    I2Str = "{" ++ string.join_list(",",list.map(to_string,I2L)) ++ "}",
+    Cmd = "hate_v_1(" ++ string.join_list(",",[E1Str,I1Str,I2Str]) ++ ")",
+    OutputsOut = set.insert(OutputsIn,Cmd)
   else if pred_never_a_1(_) = Pred then
-    io.print("never_a_1(",IoIn,Io0),
-    solutions(pred(Indiv::out) is nondet :- never_a_1(RelHandle,Indiv,_), IL),
+    solutions(pred(Indiv::out) is nondet :- never_a_1(RelHandle,Indiv,_), IndivL),
     solutions(pred(Ret::out) is nondet :-
        (never_a_1(RelHandle,_,RH),
         multi_map.lookup(RelMap,RH,Refs),
-        Ret = list.map(func({RelHandle0,_,_,Preds}) = Val is det :- Val = {RelHandle0,Preds}, Refs)),
-       HL),
-    io.print({IL,HL},Io0,Io1),
-    io.print(")",Io1,Io2),
-    io.nl(Io2,IoOut)
+        Ret = list.map(func({RelHandle0,_,_,Preds}) = Val is det :- Val = RelHandle0, Refs)),
+       RHL),
+    % list.condense(RHL,RHLc),
+    IndivStr = "{" ++ string.join_list(",",list.map(to_string,IndivL)) ++ "}",
+    % RHStr = "{" ++ string.join_list(",",list.map(to_string,RHLc)) ++ "}",
+    RHStr = "",
+    Cmd = "never_a_1(" ++ string.join_list(",",[IndivStr,RHStr]) ++ ")",
+    OutputsOut = set.insert(OutputsIn,Cmd)
   else if pred_neg(_) = Pred then
-    io.print("neg(",IoIn,Io0),
     solutions(pred(Event::out) is nondet :- neg(RelHandle,Event,_), EL),
     solutions(pred(Ret::out) is nondet :-
        (neg(RelHandle,_,RH),
         multi_map.lookup(RelMap,RH,Refs),
-        Ret = list.map(func({RelHandle0,_,_,Preds}) = Val is det :- Val = {RelHandle0,Preds}, Refs)),
-       HL),
-    io.print({EL,HL},Io0,Io1),
-    io.print(")",Io1,Io2),
-    io.nl(Io2,IoOut)
+        Ret = list.map(func({RelHandle0,_,_,Preds}) = Val is det :- Val = RelHandle0, Refs)),
+       RHL),
+    % list.condense(RHL,RHLc),
+    EStr = "{" ++ string.join_list(",",list.map(to_string,EL)) ++ "}",
+    % RHStr = "{" ++ string.join_list(",",list.map(to_string,RHLc)) ++ "}",
+    RHStr = "",
+    Cmd = "neg(" ++ string.join_list(",",[EStr,RHStr]) ++ ")",
+    OutputsOut = set.insert(OutputsIn,Cmd)
   else if pred_colon_p_namely(_) = Pred then
-    io.print("colon_p_namely(",IoIn,Io0),
     solutions(pred(Event::out) is nondet :- colon_p_namely(RelHandle,Event,_,_), EL),
     solutions(pred(Ret::out) is nondet :-
        (colon_p_namely(RelHandle,_,RH1,_),
         multi_map.lookup(RelMap,RH1,Refs),
         Ret = list.map(func({RelHandle0,_,_,Preds}) = Val is det :- Val = {RelHandle0,Preds}, Refs)),
-       H1L),
+       RH1L),
     solutions(pred(Ret::out) is nondet :-
        (colon_p_namely(RelHandle,_,_,RH2),
         multi_map.lookup(RelMap,RH2,Refs),
         Ret = list.map(func({RelHandle0,_,_,Preds}) = Val is det :- Val = {RelHandle0,Preds}, Refs)),
-       H2L),
-    io.print({EL,H1L,H2L},Io0,Io1),
-    io.print(")",Io1,Io2),
-    io.nl(Io2,IoOut)
-  else	
-    io.print(Pred,IoIn,IoOut),
+       RH2L),
+    % list.condense(RHL1,RHL1c),
+    % list.condense(RHL2,RHL2c),
+    EStr = "{" ++ string.join_list(",",list.map(to_string,EL)) ++ "}",
+    % RH1Str = "{" ++ string.join_list(",",list.map(to_string,RHL1c)) ++ "}",
+    % RH2Str = "{" ++ string.join_list(",",list.map(to_string,RHL2c)) ++ "}",
+    RH1Str = "",
+    RH2Str = "",
+    Cmd = "colon_p_namely(" ++ string.join_list(",",[EStr,RH1Str,RH2Str]) ++ ")",
+    OutputsOut = set.insert(OutputsIn,Cmd)
+  else if pred_person(_) = Pred then
+    solutions(pred(Inst::out) is nondet :- person(RelHandle,Inst), IL),
+    IStr = "{" ++ string.join_list(",",list.map(to_string,IL)) ++ "}",
+    Cmd = "person(" ++ string.join_list(",",[IStr]) ++ ")",
+    OutputsOut = set.insert(OutputsIn,Cmd)
+  else if pred_some_q(_) = Pred then
+    solutions(pred(Inst::out) is nondet :- some_q(RelHandle,Inst,_,_), IL),
+    solutions(pred(RstrHandle::out) is nondet :- some_q(RelHandle,_,RstrHandle,_), RSHL),
+    solutions(pred(BodyHandle::out) is nondet :- some_q(RelHandle,_,_,BodyHandle), BHL),
+    IStr = "{" ++ string.join_list(",",list.map(to_string,IL)) ++ "}",
+    RSHLStr = "{" ++ string.join_list(",",list.map(to_string,RSHL)) ++ "}",
+    BHStr = "{" ++ string.join_list(",",list.map(to_string,BHL)) ++ "}",
+    Cmd = "some_q(" ++ string.join_list(",",[IStr,RSHLStr,BHStr]) ++ ")",
+    OutputsOut = set.insert(OutputsIn,Cmd)
+  else if pred_named(_) = Pred then
+    solutions(pred(Inst::out) is nondet :- named(RelHandle,Inst,_), IL),
+    solutions(pred(Carg::out) is nondet :- named(RelHandle,_,Carg), CargL),
+    IStr = "{" ++ string.join_list(",",list.map(to_string,IL)) ++ "}",
+    CStr = "{" ++ string.join_list(",",list.map(to_string,CargL)) ++ "}",
+    Cmd = "named(" ++ string.join_list(",",[IStr,CStr]) ++ ")",
+    OutputsOut = set.insert(OutputsIn,Cmd)
+  else if pred_compound(_) = Pred then
+    solutions(pred(Event::out) is nondet :- compound(RelHandle,Event,_,_), EL),
+    solutions(pred(Inst::out) is nondet :- compound(RelHandle,_,Inst,_), IL1),
+    solutions(pred(Inst::out) is nondet :- compound(RelHandle,_,_,Inst), IL2),
+    EStr = "{" ++ string.join_list(",",list.map(to_string,EL)) ++ "}",
+    I1Str = "{" ++ string.join_list(",",list.map(to_string,IL1)) ++ "}",
+    I2Str = "{" ++ string.join_list(",",list.map(to_string,IL2)) ++ "}",
+    Cmd = "compound(" ++ string.join_list(",",[EStr,I1Str,I2Str]) ++ ")",
+    OutputsOut = set.insert(OutputsIn,Cmd)
+  else	 if pred_proper_q(_) = Pred then
+    solutions(pred(Inst::out) is nondet :- proper_q(RelHandle,Inst,_,_), IL),
+    solutions(pred(RstrHandle::out) is nondet :- proper_q(RelHandle,_,RstrHandle,_), RSHL),
+    solutions(pred(BodyHandle::out) is nondet :- proper_q(RelHandle,_,_,BodyHandle), BHL),
+    IStr = "{" ++ string.join_list(",",list.map(to_string,IL)) ++ "}",
+    RSHLStr = "{" ++ string.join_list(",",list.map(to_string,RSHL)) ++ "}",
+    BHStr = "{" ++ string.join_list(",",list.map(to_string,BHL)) ++ "}",
+    Cmd = "proper_q(" ++ string.join_list(",",[IStr,RSHLStr,BHStr]) ++ ")",
+    OutputsOut = set.insert(OutputsIn,Cmd)
+  else
+    impure unsafe_perform_io(print(Pred)),
     error("unknown predicate").
 
 :- pred loadArgMapForSentence(mrs_psoa_post,
@@ -421,4 +512,8 @@ loadArgMap = ArgMap :-
 
 main(!IO) :-
   ArgMap = loadArgMap,
-  io.print(ArgMap,!IO).
+  psoa_post(TopHandle,Event,RelMap) = det_head(sentences.sentences),
+  multi_map.lookup(RelMap,TopHandle,L),
+  {RelHandle,_,_,Pred} = det_head(L),
+  unpackRelation(RelMap,ArgMap,RelHandle,Pred,set.init,Outputs),
+  io.print(Outputs,!IO).
