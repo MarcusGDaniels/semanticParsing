@@ -98,14 +98,18 @@
 :- instance mrs_attr(mrs_handle).
 :- instance mrs_attr(mrs_event).
 :- instance mrs_attr(mrs_unknown).
+
 :- instance mrs_print(mrs_inst).
 :- instance mrs_print(mrs_event).
+:- instance mrs_print(mrs_indiv).
+:- instance mrs_print(mrs_carg).
 :- instance mrs_print(mrs_rel_t).
 :- instance mrs_print(mrs_rel_qeq_t).
 :- instance mrs_print(mrs_hcons).
 :- instance mrs_print(mrs_psoa).
-:- instance mrs_print(mrs_handle).
 :- instance mrs_print(mrs_rel_handle).
+:- instance mrs_print(mrs_rstr_handle).
+:- instance mrs_print(mrs_body_handle).
 
 :- func relationDeclarations(list(mrs_rel_t)) = string.
 
