@@ -33,4 +33,8 @@ echo "].") > sentences.m
 mmc --make genMaster
 genMaster > calls.m
 
+./mkCollectArguments.sh > sentence_collectArguments.m
+./mkUnpackRelations.sh > sentence_unpackRelation.m
+
 mmc --make testSentences
+mmc --make agatha

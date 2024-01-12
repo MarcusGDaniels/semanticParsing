@@ -17,3 +17,6 @@ rm -f genMaster
 rm -f testSentences
 rm -f calls.m
 rm -f testQuery testSentences agatha
+rm -f sentence_collectArguments.m
+rm -f sentence_unpackRelation.m
+rm -f _predicate_table
