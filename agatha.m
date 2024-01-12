@@ -335,7 +335,12 @@ unpackRelation(RelMap,ArgMap,RelHandle,Pred,OutputsIn,OutputsOut) :-
     EStr = "{" ++ string.join_list(",",list.map(to_string,EL)) ++ "}",
     IStr = "{" ++ string.join_list(",",list.map(to_string,IL)) ++ "}",
     Cmd = "live_v_1(" ++ string.join_list(",",[EStr,IStr]) ++ ")",
-    OutputsOut = set.insert(OutputsIn,Cmd)
+    (if set.member(Cmd,OutputsIn) then
+      OutputsOut = OutputsIn
+    else
+      Outputs0 = set.insert(OutputsIn,Cmd),
+      expandEvents(RelHandle,RelMap,ArgMap,EL,Outputs0,Outputs1),
+      expandInstances(RelHandle,RelMap,ArgMap,IL,Outputs1,OutputsOut))
   else if pred_people_n_of(_) = Pred then
     solutions(pred(Inst::out) is nondet :- people_n_of(RelHandle,Inst,_), InstL),
     solutions(pred(Indiv::out) is nondet :- people_n_of(RelHandle,_,Indiv), IndivL),
@@ -358,11 +363,13 @@ unpackRelation(RelMap,ArgMap,RelHandle,Pred,OutputsIn,OutputsOut) :-
     I1Str = "{" ++ string.join_list(",",list.map(to_string,I1L)) ++ "}",
     I2Str = "{" ++ string.join_list(",",list.map(to_string,I2L)) ++ "}",
     Cmd = "kill_v_1(" ++ string.join_list(",",[ELStr,I1Str,I2Str]) ++ ")",
-    Outputs0 = set.insert(OutputsIn,Cmd),
-
-    expandEvents(RelHandle,RelMap,ArgMap,EL,Outputs0,Outputs1),
-    expandInstances(RelHandle,RelMap,ArgMap,I1L,Outputs1,Outputs2),
-    expandInstances(RelHandle,RelMap,ArgMap,I2L,Outputs2,OutputsOut)
+    (if set.member(Cmd,OutputsIn) then
+      OutputsOut = OutputsIn
+    else
+      Outputs0 = set.insert(OutputsIn,Cmd),
+      expandEvents(RelHandle,RelMap,ArgMap,EL,Outputs0,Outputs1),
+      expandInstances(RelHandle,RelMap,ArgMap,I1L,Outputs1,Outputs2),
+      expandInstances(RelHandle,RelMap,ArgMap,I2L,Outputs2,OutputsOut))
   else if pred_in_p_loc(_) = Pred then
     solutions(pred(E1::out) is nondet :- in_p_loc(RelHandle,E1,_,_), E1L),
     solutions(pred(E2::out) is nondet :- in_p_loc(RelHandle,_,E2,_), E2L),
