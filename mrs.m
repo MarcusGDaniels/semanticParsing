@@ -111,6 +111,7 @@
 :- instance mrs_print(mrs_rstr_handle).
 :- instance mrs_print(mrs_body_handle).
 :- instance mrs_print(mrs_unknown).
+:- instance mrs_print(mrs_handle).
 
 :- func relationDeclarations(list(mrs_rel_t)) = string.
 
