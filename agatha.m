@@ -27,7 +27,7 @@
 	             multi_map(mrs_types, mrs_rel_handle)).
 :- mode expandArgMap(in,in,out) is det.
 expandArgMap(RelMap,ArgMapIn,ArgMapOut) :-
-    list.foldl(pred({RelHandle0,_,_,Pred}::in,ArgMapIn0::in,ArgMapOut0::out) is det :- collectArguments(RelHandle0,Pred,ArgMapIn0,ArgMapOut0),
+    list.foldl(pred({RelHandle0,_,_,Pred}::in,ArgMapIn0::in,ArgMapOut0::out) is det :- collectArguments(RelMap,RelHandle0,Pred,ArgMapIn0,ArgMapOut0),
                multi_map.values(RelMap),ArgMapIn,ArgMapOut).
 
 :- pred loadArgMapForSentence(mrs_psoa_post,
@@ -39,15 +39,12 @@ loadArgMapForSentence(Sentence,ArgMapIn,ArgMapOut) :-
   expandArgMap(RelMap,ArgMapIn,ArgMapOut).
 
 main(!IO) :-
-  Sentence = det_head(sentences.sentences),
+  Sentence = det_index0(sentences.sentences,8),
   loadArgMapForSentence(Sentence,multi_map.init,ArgMap),
   psoa_post(TopHandle,Event,RelMap) = Sentence,
   multi_map.lookup(RelMap,TopHandle,L),
   {RelHandle,_,_,Pred} = det_head(L),
   sentence_unpackRelation.unpackRelation(RelMap,ArgMap,RelHandle,Pred,set.init,Outputs),
-  Exprs = list.map(func({_,Expr,_,_}) = Val :- Val = Expr,multi_map.values(RelMap)),
-  io.print(Exprs,!IO),
-  io.nl(!IO),
   io.print(Outputs,!IO),
   io.nl(!IO).
 
