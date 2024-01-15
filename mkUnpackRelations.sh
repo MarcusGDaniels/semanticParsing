@@ -30,17 +30,17 @@ cat << EOF
                      set(string),set(string)).
 :- mode expandHandle(in,in,in,in,out).
 :- pragma promise_pure(expandHandle/5).
-expandHandle(RelHandle0,RelMap,ArgMap,OutputsIn0,OutputsOut0) :-
+expandHandle(RelHandle0,RelMap,ArgMap,SignaturesIn0,SignaturesOut0) :-
    % impure unsafe_perform_io(print("expandHandle:")),
    % impure unsafe_perform_io(print(RelHandle0)),
    % impure unsafe_perform_io(print("\n")),
    (if multi_map.contains(RelMap,RelHandle0) then
      multi_map.lookup(RelMap,RelHandle0,Rels0),
-     list.foldl(pred({RelHandle0Ref,_,_,Pred0}::in,OutputsIn1::in,OutputsOut1::out) is det :- 
-                  unpackRelation(RelMap,ArgMap,RelHandle0Ref,Pred0,OutputsIn1,OutputsOut1),
-                Rels0,OutputsIn0,OutputsOut0)
+     list.foldl(pred({RelHandle0Ref,_,_,Pred0}::in,SignaturesIn1::in,SignaturesOut1::out) is det :- 
+                  unpackRelation(RelMap,ArgMap,RelHandle0Ref,Pred0,SignaturesIn1,SignaturesOut1),
+                Rels0,SignaturesIn0,SignaturesOut0)
     else
-      OutputsOut0 = OutputsIn0).
+      SignaturesOut0 = SignaturesIn0).
 
 :- pred expandArg(mrs_rel_handle,
                            multi_map(mrs_rel_handle,{mrs_rel_handle,string,string,preds}),
@@ -50,17 +50,17 @@ expandHandle(RelHandle0,RelMap,ArgMap,OutputsIn0,OutputsOut0) :-
                            set(string)).
 :- mode expandArg(in,in,in,in,in,out).
 :- pragma promise_pure(expandArg/6).
-expandArg(RelHandle,RelMap,ArgMap,AT,OutputsIn,OutputsOut) :-
+expandArg(RelHandle,RelMap,ArgMap,AT,SignaturesIn,SignaturesOut) :-
   multi_map.lookup(ArgMap,AT,Rels),
   % impure unsafe_perform_io(print("expandArg:")),
   % impure unsafe_perform_io(print({AT,Rels})),
   % impure unsafe_perform_io(print("\n")),
-  list.foldl(pred(RelHandle0::in,OutputsIn0::in,OutputsOut0::out) is det :- 
-    expandHandle(RelHandle0,RelMap,ArgMap,OutputsIn0,OutputsOut0),
-    Rels,OutputsIn,OutputsOut).
+  list.foldl(pred(RelHandle0::in,SignaturesIn0::in,SignaturesOut0::out) is det :- 
+    expandHandle(RelHandle0,RelMap,ArgMap,SignaturesIn0,SignaturesOut0),
+    Rels,SignaturesIn,SignaturesOut).
 
 :- pragma promise_pure(unpackRelation/6).
-unpackRelation(RelMap,ArgMap,RelHandle,Pred,OutputsIn,OutputsOut) :-
+unpackRelation(RelMap,ArgMap,RelHandle,Pred,SignaturesIn,SignaturesOut) :-
 EOF
 
 sed -n '/mrs/s/.*pred_\([a-z0-9_]*\)(pred(\(mrs_rel_handle,[^)]*\)))/\1\,\2/p' sentence_predicates.m | tr -d ' ' | tr -d . > _predicate_table
@@ -152,25 +152,25 @@ for line in `cat _predicate_table`; do
   done
   ArgCount=${ArgPos}
   echo "    solutions(pred({${Args}}::out) is nondet :- ${pred}(RelHandle,${Args}), L),"
-  echo "    list.foldl(pred({${Args}}::in,OutputsIn0::in,OutputsOut0::out) is det :-"
+  echo "    list.foldl(pred({${Args}}::in,SignaturesIn0::in,SignaturesOut0::out) is det :-"
   echo "               (Cmd = string.append_list([\"${pred}(\","
   for ArgPos in `seq 0 $((${ArgCount} - 2))`; do
       echo "                  to_string(${ArgAry[${ArgPos}]}),\",\","
   done      
   echo "                  to_string(${ArgAry[$((${ArgCount}-1))]}), \")\"]),"
-  echo "                (if set.member(Cmd,OutputsIn0) then"
-  echo "                   OutputsOut0 = OutputsIn0"
+  echo "                (if set.member(Cmd,SignaturesIn0) then"
+  echo "                   SignaturesOut0 = SignaturesIn0"
   echo "                 else"
-  echo "                   (set.insert(Cmd,OutputsIn0,Outputs0),"
+  echo "                   (set.insert(Cmd,SignaturesIn0,Signatures0),"
   LastPos=$(($ArgCount - 1))
   for ArgPos in `seq 0 $LastPos`; do
     if test $ArgPos = $LastPos; then
-      varIn=Outputs$LastPos
-      varOut=OutputsOut0
+      varIn=Signatures$LastPos
+      varOut=SignaturesOut0
       delim=""
     else
-      varIn=Outputs${ArgPos}
-      varOut=Outputs$((${ArgPos} + 1))
+      varIn=Signatures${ArgPos}
+      varOut=Signatures$((${ArgPos} + 1))
       delim=","
     fi         
     if test ${Types[$ArgPos]} = mrs_rel_handle; then
@@ -185,7 +185,7 @@ for line in `cat _predicate_table`; do
     fi
   done
   echo "              ))),"
-  echo "              L,OutputsIn,OutputsOut)"
+  echo "              L,SignaturesIn,SignaturesOut)"
   lineDelim="else "
 done
 
