@@ -42,18 +42,18 @@ expandHandle(RelHandle0,RelMap,ArgMap,OutputsIn0,OutputsOut0) :-
     else
       OutputsOut0 = OutputsIn0).
 
-:- pred expandSentenceType(mrs_rel_handle,
+:- pred expandArg(mrs_rel_handle,
                            multi_map(mrs_rel_handle,{mrs_rel_handle,string,string,preds}),
                            multi_map(mrs_types, mrs_rel_handle),
                            mrs_types,
                            set(string),
                            set(string)).
-:- mode expandSentenceType(in,in,in,in,in,out).
-:- pragma promise_pure(expandSentenceType/6).
-expandSentenceType(RelHandle,RelMap,ArgMap,ST,OutputsIn,OutputsOut) :-
-  multi_map.lookup(ArgMap,ST,Rels),
-  % impure unsafe_perform_io(print("expandSentenceType:")),
-  % impure unsafe_perform_io(print({ST,Rels})),
+:- mode expandArg(in,in,in,in,in,out).
+:- pragma promise_pure(expandArg/6).
+expandArg(RelHandle,RelMap,ArgMap,AT,OutputsIn,OutputsOut) :-
+  multi_map.lookup(ArgMap,AT,Rels),
+  % impure unsafe_perform_io(print("expandArg:")),
+  % impure unsafe_perform_io(print({AT,Rels})),
   % impure unsafe_perform_io(print("\n")),
   list.foldl(pred(RelHandle0::in,OutputsIn0::in,OutputsOut0::out) is det :- 
     expandHandle(RelHandle0,RelMap,ArgMap,OutputsIn0,OutputsOut0),
@@ -179,9 +179,9 @@ for line in `cat _predicate_table`; do
       echo "                        RL$ArgPos = list.map(func({RelHandleA,_,_,_}) = Ret :- Ret = RelHandleA,TL$ArgPos)"
       echo "                      else"
       echo "                        RL$ArgPos = [${Vars[$ArgPos]}]),"
-      echo "                     list.foldl(pred(RelHandleA::in,O0In::in,O0Out::out) is det :- expandSentenceType(RelHandle,RelMap,ArgMap,wrap_rel_handle(RelHandleA),O0In,O0Out),RL$ArgPos,$varIn,$varOut))$delim"
+      echo "                     list.foldl(pred(RelHandleA::in,O0In::in,O0Out::out) is det :- expandArg(RelHandle,RelMap,ArgMap,wrap_rel_handle(RelHandleA),O0In,O0Out),RL$ArgPos,$varIn,$varOut))$delim"
     else
-      echo "                    expandSentenceType(RelHandle,RelMap,ArgMap,${WrapExprs[$ArgPos]},$varIn,$varOut)$delim"
+      echo "                    expandArg(RelHandle,RelMap,ArgMap,${WrapExprs[$ArgPos]},$varIn,$varOut)$delim"
     fi
   done
   echo "              ))),"
