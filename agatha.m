@@ -18,6 +18,7 @@
 :- import_module pair.
 :- import_module require.
 :- import_module unsafe.
+:- import_module pretty_printer.
 
 :- import_module sentence_collectArguments.
 :- import_module sentence_unpackRelation.
@@ -44,7 +45,7 @@ main(!IO) :-
   psoa_post(TopHandle,Event,RelMap) = Sentence,
   multi_map.lookup(RelMap,TopHandle,L),
   {RelHandle,_,_,Pred} = det_head(L),
-  sentence_unpackRelation.unpackRelation(RelMap,ArgMap,RelHandle,Pred,set.init,Outputs),
-  io.print(Outputs,!IO),
+  sentence_unpackRelation.unpackRelation(RelMap,ArgMap,RelHandle,Pred,set.init,Signatures,[],Outputs),
+  pretty_printer.write_doc(pretty_printer.format(Outputs),!IO),
   io.nl(!IO).
 
