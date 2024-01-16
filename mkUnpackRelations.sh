@@ -167,7 +167,8 @@ for line in `cat _predicate_table`; do
   echo "                   DependenciesOut0 = DependenciesIn0"
   echo "                 else"
   echo "                   (set.insert(Cmd,SignaturesIn0,Signatures0),"
-  echo "                    Dependencies0 = list.append(DependenciesIn0,[argument(Cmd)]),"
+  echo "                    Str0 = \"${pred}\","
+  echo "                    Dependencies0 = list.append(DependenciesIn0,[predicate(Str0)]),"
   LastPos=$(($ArgCount - 1))
   for ArgPos in `seq 0 $LastPos`; do
     if test $ArgPos = $LastPos; then
@@ -189,14 +190,18 @@ for line in `cat _predicate_table`; do
       echo "                        RL$ArgPos = list.map(func({RelHandleA,_,_,_}) = Ret :- Ret = RelHandleA,TL$ArgPos)"
       echo "                      else"
       echo "                        RL$ArgPos = [${Vars[$ArgPos]}]),"
+      echo "                     Str$((ArgPos + 1)) = \"{\" ++ string.join_list(\",\",list.map(func(Item) = Ret :- Ret = to_string(Item),RL$ArgPos)) ++ \"}\","
+      echo "                     DependenciesArg$ArgPos = list.append($dvarIn,[argument(Str$((ArgPos + 1)))]),"
       echo "                     list.foldl2(pred(RelHandleA::in,S0In::in,S0Out::out,O0In::in,O0Out::out) is det :- expandArg(RelHandle,RelMap,ArgMap,wrap_rel_handle(RelHandleA),S0In,S0Out,O0In,O0Out),RL$ArgPos,$svarIn,$svarOut,[],Child$ArgPos)),"
     else
+      echo "                    Str$((ArgPos + 1)) = to_string(${Vars[$ArgPos]}),"
+      echo "                    DependenciesArg$ArgPos = list.append($dvarIn,[argument(Str$((ArgPos + 1)))]),"
       echo "                    expandArg(RelHandle,RelMap,ArgMap,${WrapExprs[$ArgPos]},$svarIn,$svarOut,[],Child$ArgPos),"
     fi
     echo "                    (if list.length(Child$ArgPos) = 0 then"
-    echo "                      $dvarOut = $dvarIn"
+    echo "                      $dvarOut = DependenciesArg$ArgPos"
     echo "                    else"
-    echo "                      $dvarOut = list.append($dvarIn,[dependency(Child$ArgPos)]))$delim"
+    echo "                      $dvarOut = list.append(DependenciesArg$ArgPos,[dependency(RelHandle,Child$ArgPos)]))$delim"
   done
   echo "              ))),"
   echo "              L,SignaturesIn,SignaturesOut,DependenciesIn,DependenciesOut)"

@@ -18,7 +18,7 @@
 
 :- type sentence_dependency == list(sentence_item).
 
-:- type sentence_item ---> argument(string) ; dependency(sentence_dependency).
+:- type sentence_item ---> predicate(string) ; argument(string) ; dependency(mrs_rel_handle,sentence_dependency).
 
 :- implementation.
 
