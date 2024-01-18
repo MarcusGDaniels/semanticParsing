@@ -19,6 +19,8 @@
 :- import_module require.
 :- import_module unsafe.
 :- import_module pretty_printer.
+:- import_module varset.
+:- import_module term_io.
 
 :- import_module sentence_collectArguments.
 :- import_module sentence_collectArgRefs.
@@ -65,8 +67,12 @@ main(!IO) :-
   {RelHandle,_,_,Pred} = det_head(L),
   KL = multi_map.keys(ArgRefMap),
   list.filter(pred(Obj::in) is semidet :- wrap_rstr_handle(_) = Obj,KL,RstrL),
-  io.print(RstrL,!IO),
-  sentence_unpackRelation.unpackRelation(RelMap,ArgMap,RelHandle,Pred,set.init,Signatures,[],Outputs),
-  pretty_printer.write_doc(pretty_printer.format(Outputs),!IO),
+  % io.print(RstrL,!IO),
+  sentence_unpackRelation.unpackRelation(RelMap,ArgMap,RelHandle,Pred,set.init,Signatures,[],Calls,varset.init,VarSet,[],Dependencies),
+  pretty_printer.write_doc(pretty_printer.format(Calls),!IO),
+  io.nl(!IO),
+  pretty_printer.write_doc(pretty_printer.format(VarSet),!IO),
+  io.nl(!IO),
+  term_io.write_term(VarSet,list.det_index0(Calls,0),!IO),
   io.nl(!IO).
 
