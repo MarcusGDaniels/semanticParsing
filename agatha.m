@@ -59,7 +59,7 @@ loadArgRefMapForSentence(Sentence,ArgRefMapIn,ArgRefMapOut) :-
   expandArgRefMap(RelMap,ArgRefMapIn,ArgRefMapOut).
 
 main(!IO) :-
-  Sentence = det_index0(sentences.sentences,8),
+  Sentence = det_index0(sentences.sentences,0),
   loadArgMapForSentence(Sentence,multi_map.init,ArgMap),
   loadArgRefMapForSentence(Sentence,multi_map.init,ArgRefMap),
   psoa_post(TopHandle,Event,RelMap) = Sentence,
@@ -68,10 +68,8 @@ main(!IO) :-
   KL = multi_map.keys(ArgRefMap),
   list.filter(pred(Obj::in) is semidet :- wrap_rstr_handle(_) = Obj,KL,RstrL),
   % io.print(RstrL,!IO),
-  sentence_unpackRelation.unpackRelation(RelMap,ArgMap,RelHandle,Pred,set.init,Signatures,[],Calls,varset.init,VarSet,[],Dependencies),
+  sentence_unpackRelation.unpackRelation(RelMap,ArgMap,RelHandle,Pred,set.init,Signatures,[],Calls,varset.init,VarSet),
   pretty_printer.write_doc(pretty_printer.format(Calls),!IO),
-  io.nl(!IO),
-  pretty_printer.write_doc(pretty_printer.format(VarSet),!IO),
   io.nl(!IO),
   term_io.write_term(VarSet,list.det_index0(Calls,0),!IO),
   io.nl(!IO).
