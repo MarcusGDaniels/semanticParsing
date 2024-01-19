@@ -21,6 +21,7 @@
 :- import_module pretty_printer.
 :- import_module varset.
 :- import_module term_io.
+:- import_module int.
 
 :- import_module sentence_collectArguments.
 :- import_module sentence_collectArgRefs.
@@ -66,8 +67,8 @@ main(!IO) :-
   multi_map.lookup(RelMap,TopHandle,L),
   {RelHandle,_,_,Pred} = det_head(L),
   KL = multi_map.keys(ArgRefMap),
-  list.filter(pred(Obj::in) is semidet :- wrap_rstr_handle(_) = Obj,KL,RstrL),
-  % io.print(RstrL,!IO),
+  list.filter_map(pred(AT::in,Ret::out) is semidet :- (wrap_rstr_handle(Rstr) = AT,multi_map.lookup(ArgRefMap,AT,VL),list.length(VL,Len),Len > 1,Ret = {Rstr,Len}),KL,RstrL),
+  io.print(RstrL,!IO),
   sentence_unpackRelation.unpackRelation(RelMap,ArgMap,RelHandle,Pred,set.init,Signatures,[],Calls,varset.init,VarSet),
   pretty_printer.write_doc(pretty_printer.format(Calls),!IO),
   io.nl(!IO),
