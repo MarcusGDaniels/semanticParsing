@@ -72,6 +72,8 @@ expandArg(RelHandle,RelMap,ArgMap,AT,SignaturesIn,SignaturesOut,CallsIn,CallsOut
 
 :- pragma promise_pure(unpackRelation/10).
 unpackRelation(RelMap,ArgMap,RelHandle,Pred,SignaturesIn,SignaturesOut,CallsIn,CallsOut,VarSetIn,VarSetOut) :-
+  Context = term.context_init,
+  (
 EOF
 
 sed -n '/mrs/s/.*pred_\([a-z0-9_]*\)(pred(\(mrs_rel_handle,[^)]*\)))/\1\,\2/p' sentence_predicates.m | tr -d ' ' | tr -d . > _predicate_table
@@ -169,7 +171,6 @@ for line in `cat _predicate_table`; do
       echo "                  to_string(${ArgAry[${ArgPos}]}),\",\","
   done      
   echo "                  to_string(${ArgAry[$((${ArgCount}-1))]}), \")\"]),"
-  echo "                Context = term.context_init,"
   echo "                (if set.member(Cmd,SignaturesIn0) then"
   echo "                   SignaturesOut0 = SignaturesIn0,"
   echo "                   CallsOut0 = CallsIn0,"
@@ -178,10 +179,11 @@ for line in `cat _predicate_table`; do
   echo "                   (set.insert(Cmd,SignaturesIn0,Signatures0),"
   echo "                    Args0 = [],"
   LastPos=$(($ArgCount - 1))
+  echo "                    varset.new_named_var(\"Ret\",RetVar,VarSetIn0,VarSet0),"
   for ArgPos in `seq 0 $LastPos`; do
     if test $ArgPos = 0; then
       svarIn=Signatures0
-      vvarIn=VarSetIn0
+      vvarIn=VarSet0
       if test $ArgPos = $LastPos; then
         svarOut=SignaturesOut0
         vvarOut=VarSetOut0
@@ -202,27 +204,44 @@ for line in `cat _predicate_table`; do
       vvarOut=VarSet$((${ArgPos} + 1))
       delim=","
     fi         
-    cvarIn=Args${ArgPos}
-    cvarOut=Args$((${ArgPos} + 1))
-    Val="[term.variable(Var$ArgPos,Context)]"
+    avarIn=Args${ArgPos}
+    avarOut=Args$((${ArgPos} + 1))
       echo "                    varset.new_named_var(to_string(${Vars[$ArgPos]}),Var$ArgPos,$vvarIn,VarSetTmp$ArgPos),"
     if test ${Types[$ArgPos]} = mrs_rel_handle; then
-      echo "                    ((if multi_map.contains(RelMap,${Vars[$ArgPos]}) then"
+      echo "                    ((if multi_map.contains(RelMap,${Vars[$ArgPos]}), false then"
       echo "                        TL$ArgPos = multi_map.lookup(RelMap,${Vars[$ArgPos]}),"
       echo "                        RL$ArgPos = list.map(func({RelHandleA,_,_,_}) = Ret :- Ret = RelHandleA,TL$ArgPos)"
       echo "                      else"
       echo "                        RL$ArgPos = [${Vars[$ArgPos]}]),"
-      echo "                     list.append($cvarIn,$Val,ArgsTmp$ArgPos),"
       echo "                     list.foldl3(pred(RelHandleA::in,S0In::in,S0Out::out,C0In::in,C0Out::out,V0In::in,V0Out::out) is det :-"
       echo "                       expandArg(RelHandle,RelMap,ArgMap,wrap_rel_handle(RelHandleA),S0In,S0Out,C0In,C0Out,V0In,V0Out),"
-      echo "                       RL$ArgPos,$svarIn,$svarOut,ArgsTmp${ArgPos},$cvarOut,VarSetTmp$ArgPos,$vvarOut)"
+      echo "                       RL$ArgPos,$svarIn,$svarOut,[],Arg${ArgPos},VarSetTmp$ArgPos,$vvarOut)"
       echo "                     ),"
     else
-      echo "                    list.append($cvarIn,$Val,ArgsTmp$ArgPos),"
-      echo "                    expandArg(RelHandle,RelMap,ArgMap,${WrapExprs[$ArgPos]},$svarIn,$svarOut,ArgsTmp$ArgPos,$cvarOut,VarSetTmp$ArgPos,$vvarOut),"
+      echo "                    expandArg(RelHandle,RelMap,ArgMap,${WrapExprs[$ArgPos]},$svarIn,$svarOut,[],Arg$ArgPos,VarSetTmp$ArgPos,$vvarOut),"
     fi
+    echo "                    list.append($avarIn,"
+cat << EOF
+                                (if length(Arg$ArgPos) = 0 then
+                                  [term.variable(Var$ArgPos,Context)]
+                                else
+                                  [term.functor(atom("apply"),
+                                    [term.functor(atom(":-"),
+                                       [term.functor(atom("is"),
+                                          [term.functor(atom("="),
+                                             [term.functor(term.atom("func"), [], Context),
+                                              term.variable(RetVar,Context)],
+                                             Context),
+                                           term.functor(term.atom("semidet"), [], Context)],
+                                          Context),
+  				      list.foldl(func(Statement,Acc) = NewAcc :- NewAcc = term.functor(term.atom(","),[Acc,Statement],Context),
+                                                   Arg$ArgPos,
+  						 term.functor(term.atom("="),[term.variable(RetVar,Context),term.variable(Var$ArgPos,Context)],Context))
+				       ],Context)],Context)]),
+                                 $avarOut),
+EOF
   done
-  echo "                    list.append(CallsIn0,[term.functor(term.atom(\"${pred}\"),$cvarOut,Context)],CallsOut0)"
+  echo "                    list.append(CallsIn0,[term.functor(term.atom(\"${pred}\"),$avarOut,Context)],CallsOut0)"
   echo "              ))),"
   echo "              L,SignaturesIn,SignaturesOut,CallsIn,CallsOut,VarSetIn,VarSetOut)"
   lineDelim="else "
@@ -231,5 +250,6 @@ done
 cat << EOF
   else
     impure unsafe_perform_io(print(Pred)),
-    error("unknown predicate").
+    error("unknown predicate")
+  ).
 EOF

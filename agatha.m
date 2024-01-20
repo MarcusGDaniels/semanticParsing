@@ -15,6 +15,7 @@
 :- import_module set.
 :- import_module string.
 :- import_module multi_map.
+:- import_module map.
 :- import_module pair.
 :- import_module require.
 :- import_module unsafe.
@@ -27,51 +28,40 @@
 :- import_module sentence_collectArgRefs.
 :- import_module sentence_unpackRelation.
 
-:- pred expandArgMap(multi_map(mrs_rel_handle,{mrs_rel_handle,string,string,preds}),
-                     multi_map(mrs_types, mrs_rel_handle),
-	             multi_map(mrs_types, mrs_rel_handle)).
-:- mode expandArgMap(in,in,out) is det.
-expandArgMap(RelMap,ArgMapIn,ArgMapOut) :-
-    list.foldl(pred({RelHandle0,_,_,Pred}::in,ArgMapIn0::in,ArgMapOut0::out) is det :- collectArguments(RelMap,RelHandle0,Pred,ArgMapIn0,ArgMapOut0),
-               multi_map.values(RelMap),ArgMapIn,ArgMapOut).
-
-:- pred loadArgMapForSentence(mrs_psoa_post,
-                              multi_map(mrs_types, mrs_rel_handle),
-		              multi_map(mrs_types, mrs_rel_handle)).
-:- mode loadArgMapForSentence(in,in,out) is det.
-loadArgMapForSentence(Sentence,ArgMapIn,ArgMapOut) :-
-  psoa_post(TopHandle,Event,RelMap) = Sentence,
-  expandArgMap(RelMap,ArgMapIn,ArgMapOut).
-
-:- pred expandArgRefMap(multi_map(mrs_rel_handle,{mrs_rel_handle,string,string,preds}),
-                     multi_map(mrs_types, mrs_rel_handle),
-	             multi_map(mrs_types, mrs_rel_handle)).
-:- mode expandArgRefMap(in,in,out) is det.
-expandArgRefMap(RelMap,ArgRefMapIn,ArgRefMapOut) :-
-    list.foldl(pred({RelHandle0,_,_,Pred}::in,ArgRefMapIn0::in,ArgRefMapOut0::out) is det :- collectArgRefs(RelMap,RelHandle0,Pred,ArgRefMapIn0,ArgRefMapOut0),
-               multi_map.values(RelMap),ArgRefMapIn,ArgRefMapOut).
-
-:- pred loadArgRefMapForSentence(mrs_psoa_post,
-                              multi_map(mrs_types, mrs_rel_handle),
-		              multi_map(mrs_types, mrs_rel_handle)).
-:- mode loadArgRefMapForSentence(in,in,out) is det.
-loadArgRefMapForSentence(Sentence,ArgRefMapIn,ArgRefMapOut) :-
-  psoa_post(TopHandle,Event,RelMap) = Sentence,
-  expandArgRefMap(RelMap,ArgRefMapIn,ArgRefMapOut).
-
 main(!IO) :-
-  Sentence = det_index0(sentences.sentences,0),
-  loadArgMapForSentence(Sentence,multi_map.init,ArgMap),
-  loadArgRefMapForSentence(Sentence,multi_map.init,ArgRefMap),
-  psoa_post(TopHandle,Event,RelMap) = Sentence,
-  multi_map.lookup(RelMap,TopHandle,L),
-  {RelHandle,_,_,Pred} = det_head(L),
+  SentencePos = 0,
+  Sentence = det_index0(sentences.sentences,SentencePos),
+  psoa_post(TopHandle,Event,RelMap0) = Sentence,
+  map.foldl(pred(K::in, V::in, MapIn::in, MapOut::out) is det :- 
+    (list.map(pred({RelHandle0,_,_,Pred0}::in,Ret::out) is det :- Ret = {RelHandle0,"","",Pred0},V,L),
+     map.det_insert(K,L,MapIn,MapOut)),RelMap0,map.init,RelMap),
+  multi_map.values(RelMap,RelMapValuesTrim),
+  list.foldl(pred({RelHandle0,_,_,Pred0}::in,ArgMapIn0::in,ArgMapOut0::out) is det :-
+              collectArguments(RelMap0,RelHandle0,Pred0,ArgMapIn0,ArgMapOut0),
+             RelMapValuesTrim,multi_map.init,ArgMap),
+  list.foldl(pred({RelHandle0,_,_,Pred0}::in,ArgRefMapIn0::in,ArgRefMapOut0::out) is det :- collectArgRefs(RelMap,RelHandle0,Pred0,ArgRefMapIn0,ArgRefMapOut0),
+             RelMapValuesTrim,multi_map.init,ArgRefMap),
+  % multi_map.lookup(RelMap,TopHandle,LL),
+  % {RelHandle,_,_,Pred} = det_head(LL),
   KL = multi_map.keys(ArgRefMap),
-  list.filter_map(pred(AT::in,Ret::out) is semidet :- (wrap_rstr_handle(Rstr) = AT,multi_map.lookup(ArgRefMap,AT,VL),list.length(VL,Len),Len > 1,Ret = {Rstr,Len}),KL,RstrL),
-  io.print(RstrL,!IO),
-  sentence_unpackRelation.unpackRelation(RelMap,ArgMap,RelHandle,Pred,set.init,Signatures,[],Calls,varset.init,VarSet),
-  pretty_printer.write_doc(pretty_printer.format(Calls),!IO),
+  list.filter_map(pred(AT::in,Ret::out) is semidet :- 
+    (wrap_rstr_handle(Rstr) = AT,
+     mrs_rstr_handle(Handle) = Rstr,
+     mrs_handle(HandleStr) = Handle,
+     multi_map.lookup(ArgRefMap,AT,VL),
+     TargetStr = "s" ++ string.int_to_string(SentencePos),
+     string.right(HandleStr,string.length(TargetStr)) = TargetStr,
+     list.length(VL,Len),
+     Len > 1,
+     Ret = mrs_rel_handle(Handle)),
+    KL,RstrL),
+  det_index0(RstrL,3,Rel0),
+  io.print(Rel0,!IO),
   io.nl(!IO),
-  term_io.write_term(VarSet,list.det_index0(Calls,0),!IO),
+  multi_map.lookup(RelMap,Rel0,LL0),
+  {RelHandle0,_,_,Pred0} = det_index0(LL0,0),
+  sentence_unpackRelation.unpackRelation(RelMap,ArgMap,RelHandle0,Pred0,set.init,Signatures0,[],Calls0,varset.init,VarSet0),
+  term_io.write_term(VarSet0,det_index0(Calls0,0),!IO),
   io.nl(!IO).
+
 
