@@ -14,12 +14,13 @@ cat << EOF
 
 :- pred unpackRelation(multi_map(mrs_rel_handle,{mrs_rel_handle,string,string,preds}),
                        multi_map(mrs_types,mrs_rel_handle),
+                       set(mrs_rel_handle),
                        mrs_rel_handle,
                        preds,
 		       set(string),set(string),
 		       list(term(T)),list(term(T)), 
 		       varset(T),varset(T)).
-:- mode unpackRelation(in,in,in,in,in,out,in,out,in,out) is det.
+:- mode unpackRelation(in,in,in,in,in,in,out,in,out,in,out) is det.
 
 :- implementation.
 :- import_module require.
@@ -32,19 +33,20 @@ cat << EOF
 :- pred expandHandle(mrs_rel_handle,
                      multi_map(mrs_rel_handle,{mrs_rel_handle,string,string,preds}),
                      multi_map(mrs_types, mrs_rel_handle),
+                     set(mrs_rel_handle),
                      set(string),set(string),
                      list(term(T)),list(term(T)),
 		     varset(T),varset(T)).
-:- mode expandHandle(in,in,in,in,out,in,out,in,out).
-:- pragma promise_pure(expandHandle/9).
-expandHandle(RelHandle0,RelMap,ArgMap,SignaturesIn0,SignaturesOut0,CallsIn0,CallsOut0,VarSetIn0,VarSetOut0) :-
+:- mode expandHandle(in,in,in,in,in,out,in,out,in,out).
+:- pragma promise_pure(expandHandle/10).
+expandHandle(RelHandle0,RelMap,ArgMap,ExcludeRelSet,SignaturesIn0,SignaturesOut0,CallsIn0,CallsOut0,VarSetIn0,VarSetOut0) :-
    % impure unsafe_perform_io(print("expandHandle:")),
    % impure unsafe_perform_io(print(RelHandle0)),
    % impure unsafe_perform_io(print("\n")),
    (if multi_map.contains(RelMap,RelHandle0) then
      multi_map.lookup(RelMap,RelHandle0,Rels0),
      list.foldl3(pred({RelHandle0Ref,_,_,Pred0}::in,SignaturesIn1::in,SignaturesOut1::out,CallsIn1::in,CallsOut1::out,VarSetIn1::in,VarSetOut1::out) is det :- 
-		  unpackRelation(RelMap,ArgMap,RelHandle0Ref,Pred0,SignaturesIn1,SignaturesOut1,CallsIn1,CallsOut1,VarSetIn1,VarSetOut1),
+		  unpackRelation(RelMap,ArgMap,ExcludeRelSet,RelHandle0Ref,Pred0,SignaturesIn1,SignaturesOut1,CallsIn1,CallsOut1,VarSetIn1,VarSetOut1),
 		Rels0,SignaturesIn0,SignaturesOut0,CallsIn0,CallsOut0,VarSetIn0,VarSetOut0)
     else
       SignaturesOut0 = SignaturesIn0,
@@ -53,25 +55,31 @@ expandHandle(RelHandle0,RelMap,ArgMap,SignaturesIn0,SignaturesOut0,CallsIn0,Call
       ).
 
 :- pred expandArg(mrs_rel_handle,
-                           multi_map(mrs_rel_handle,{mrs_rel_handle,string,string,preds}),
-                           multi_map(mrs_types, mrs_rel_handle),
-                           mrs_types,
-                           set(string), set(string),
-                           list(term(T)),list(term(T)),
-			   varset(T),varset(T)).
-:- mode expandArg(in,in,in,in,in,out,in,out,in,out).
-:- pragma promise_pure(expandArg/10).
-expandArg(RelHandle,RelMap,ArgMap,AT,SignaturesIn,SignaturesOut,CallsIn,CallsOut,VarSetIn,VarSetOut) :-
+                  multi_map(mrs_rel_handle,{mrs_rel_handle,string,string,preds}),
+                  multi_map(mrs_types, mrs_rel_handle),
+		  set(mrs_rel_handle),
+                  mrs_types,
+                  set(string), set(string),
+                  list(term(T)),list(term(T)),
+                  varset(T),varset(T)).
+:- mode expandArg(in,in,in,in,in,in,out,in,out,in,out).
+:- pragma promise_pure(expandArg/11).
+expandArg(RelHandle,RelMap,ArgMap,ExcludeRelSet,AT,SignaturesIn,SignaturesOut,CallsIn,CallsOut,VarSetIn,VarSetOut) :-
   multi_map.lookup(ArgMap,AT,Rels),
   % impure unsafe_perform_io(print("expandArg:")),
   % impure unsafe_perform_io(print({AT,Rels})),
   % impure unsafe_perform_io(print("\n")),
   list.foldl3(pred(RelHandle0::in,SignaturesIn0::in,SignaturesOut0::out,CallsIn0::in,CallsOut0::out,VarSetIn0::in,VarSetOut0::out) is det :- 
-    expandHandle(RelHandle0,RelMap,ArgMap,SignaturesIn0,SignaturesOut0,CallsIn0,CallsOut0,VarSetIn0,VarSetOut0),
+    (if set.member(RelHandle0,ExcludeRelSet) then
+      SignaturesOut0 = SignaturesIn0,
+      CallsOut0 = CallsIn0,
+      VarSetOut0 = VarSetIn0
+    else
+      expandHandle(RelHandle0,RelMap,ArgMap,ExcludeRelSet,SignaturesIn0,SignaturesOut0,CallsIn0,CallsOut0,VarSetIn0,VarSetOut0)),
     Rels,SignaturesIn,SignaturesOut,CallsIn,CallsOut,VarSetIn,VarSetOut).
 
-:- pragma promise_pure(unpackRelation/10).
-unpackRelation(RelMap,ArgMap,RelHandle,Pred,SignaturesIn,SignaturesOut,CallsIn,CallsOut,VarSetIn,VarSetOut) :-
+:- pragma promise_pure(unpackRelation/11).
+unpackRelation(RelMap,ArgMap,ExcludeRelSet,RelHandle,Pred,SignaturesIn,SignaturesOut,CallsIn,CallsOut,VarSetIn,VarSetOut) :-
   Context = term.context_init,
   (
 EOF
@@ -103,30 +111,35 @@ for line in `cat _predicate_table`; do
     case $1 in
       mrs_indiv)
         Var=Indiv${IndivPos}
+        VarName=$Var
 	Rhs=$Var
         IndivPos=$((${IndivPos} + 1))
         WrapExpr="wrap_indiv(${Var})"
         ;;
       mrs_inst)
         Var=Inst${InstPos}
+        VarName=$Var
 	Rhs=$Var
         InstPos=$((${InstPos} + 1))
         WrapExpr="wrap_inst(${Var})"
         ;;
       mrs_event)
         Var=Event${EventPos}
+        VarName=$Var
 	Rhs=$Var
         EventPos=$((${EventPos} + 1))
         WrapExpr="wrap_event(${Var})"
         ;;
       mrs_rel_handle)
 	Var="mrs_rel_handle(RelHandle${RelHandlePos})"
-	Rhs="mrs_rel_handle(RelHandle${RelHandlePos})"
+        VarName=RelHandle${RelHandlePos}
+        Rhs="mrs_rel_handle(RelHandle${RelHandlePos})"
         RelHandlePos=$((${RelHandlePos} + 1))
         WrapExpr="wrap_rel_handle(${Var})"
         ;;
       mrs_rstr_handle)
 	Var="mrs_rstr_handle(RstrHandle${RstrHandlePos})"
+        VarName=RstrHandle${RstrHandlePos}
 	Types[${ArgPos}]=mrs_rel_handle
 	Rhs="mrs_rel_handle(RstrHandle${RstrHandlePos})"
         RstrHandlePos=$((${RstrHandlePos} + 1))
@@ -134,6 +147,7 @@ for line in `cat _predicate_table`; do
         ;;
       mrs_body_handle)
 	Var="mrs_body_handle(BodyHandle${BodyHandlePos})"
+        VarName=BodyHandle${BodyHandlePos}
 	Types[${ArgPos}]=mrs_rel_handle
 	Rhs="mrs_rel_handle(BodyHandle${BodyHandlePos})"
         BodyHandlePos=$((${BodyHandlePos} + 1))
@@ -141,12 +155,14 @@ for line in `cat _predicate_table`; do
         ;;
       mrs_carg)
         Var=Carg${CargPos}
+	VarName=$Var
 	Rhs=$Var
         CargPos=$((${CargPos} + 1))
         WrapExpr="wrap_carg(${Var})"
         ;;
       mrs_unknown)
         Var=Unk${UnknownPos}
+	VarName=$Var
 	Rhs=$Var
         UnknownPos=$((${UnknownPos} + 1))
         WrapExpr="wrap_unknown(${Var})"
@@ -158,7 +174,8 @@ for line in `cat _predicate_table`; do
      Args="${Args}${delim}${Var}"
      ArgAry[${ArgPos}]=${Var}
      Vars[${ArgPos}]=$Rhs
-     WrapExprs[${ArgPos}]=${WrapExpr}
+     VarNames[${ArgPos}]=$VarName
+     WrapExprs[${ArgPos}]=$WrapExpr
      delim=","
      shift
      ArgPos=$((${ArgPos} + 1))
@@ -206,19 +223,19 @@ for line in `cat _predicate_table`; do
     fi         
     avarIn=Args${ArgPos}
     avarOut=Args$((${ArgPos} + 1))
-      echo "                    varset.new_named_var(to_string(${Vars[$ArgPos]}),Var$ArgPos,$vvarIn,VarSetTmp$ArgPos),"
+      echo "                    varset.new_named_var(to_string(${VarNames[$ArgPos]}),Var$ArgPos,$vvarIn,VarSetTmp$ArgPos),"
     if test ${Types[$ArgPos]} = mrs_rel_handle; then
-      echo "                    ((if multi_map.contains(RelMap,${Vars[$ArgPos]}), false then"
+      echo "                    ((if multi_map.contains(RelMap,${Vars[$ArgPos]}) then"
       echo "                        TL$ArgPos = multi_map.lookup(RelMap,${Vars[$ArgPos]}),"
       echo "                        RL$ArgPos = list.map(func({RelHandleA,_,_,_}) = Ret :- Ret = RelHandleA,TL$ArgPos)"
       echo "                      else"
       echo "                        RL$ArgPos = [${Vars[$ArgPos]}]),"
       echo "                     list.foldl3(pred(RelHandleA::in,S0In::in,S0Out::out,C0In::in,C0Out::out,V0In::in,V0Out::out) is det :-"
-      echo "                       expandArg(RelHandle,RelMap,ArgMap,wrap_rel_handle(RelHandleA),S0In,S0Out,C0In,C0Out,V0In,V0Out),"
+      echo "                       expandArg(RelHandle,RelMap,ArgMap,ExcludeRelSet,wrap_rel_handle(RelHandleA),S0In,S0Out,C0In,C0Out,V0In,V0Out),"
       echo "                       RL$ArgPos,$svarIn,$svarOut,[],Arg${ArgPos},VarSetTmp$ArgPos,$vvarOut)"
       echo "                     ),"
     else
-      echo "                    expandArg(RelHandle,RelMap,ArgMap,${WrapExprs[$ArgPos]},$svarIn,$svarOut,[],Arg$ArgPos,VarSetTmp$ArgPos,$vvarOut),"
+      echo "                    expandArg(RelHandle,RelMap,ArgMap,ExcludeRelSet,${WrapExprs[$ArgPos]},$svarIn,$svarOut,[],Arg$ArgPos,VarSetTmp$ArgPos,$vvarOut),"
     fi
     echo "                    list.append($avarIn,"
 cat << EOF

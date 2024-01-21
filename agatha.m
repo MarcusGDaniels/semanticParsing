@@ -41,8 +41,8 @@ main(!IO) :-
              RelMapValuesTrim,multi_map.init,ArgMap),
   list.foldl(pred({RelHandle0,_,_,Pred0}::in,ArgRefMapIn0::in,ArgRefMapOut0::out) is det :- collectArgRefs(RelMap,RelHandle0,Pred0,ArgRefMapIn0,ArgRefMapOut0),
              RelMapValuesTrim,multi_map.init,ArgRefMap),
-  % multi_map.lookup(RelMap,TopHandle,LL),
-  % {RelHandle,_,_,Pred} = det_head(LL),
+  multi_map.lookup(RelMap,TopHandle,LL),
+  {RelHandle,_,_,Pred} = det_head(LL),
   KL = multi_map.keys(ArgRefMap),
   list.filter_map(pred(AT::in,Ret::out) is semidet :- 
     (wrap_rstr_handle(Rstr) = AT,
@@ -55,12 +55,12 @@ main(!IO) :-
      Len > 1,
      Ret = mrs_rel_handle(Handle)),
     KL,RstrL),
-  det_index0(RstrL,3,Rel0),
-  io.print(Rel0,!IO),
+  RstrSet = set.from_list(RstrL),
+  io.print(RstrSet,!IO),
   io.nl(!IO),
-  multi_map.lookup(RelMap,Rel0,LL0),
-  {RelHandle0,_,_,Pred0} = det_index0(LL0,0),
-  sentence_unpackRelation.unpackRelation(RelMap,ArgMap,RelHandle0,Pred0,set.init,Signatures0,[],Calls0,varset.init,VarSet0),
+  io.print(RelHandle,!IO),
+  io.nl(!IO),
+  sentence_unpackRelation.unpackRelation(RelMap,ArgMap,RstrSet,RelHandle,Pred,set.init,Signatures0,[],Calls0,varset.init,VarSet0),
   term_io.write_term(VarSet0,det_index0(Calls0,0),!IO),
   io.nl(!IO).
 
