@@ -135,8 +135,6 @@ main(!IO) :-
   rstr_keys(RelMap, ArgRefMap, SentencePos, RstrSet),
   body_keys(RelMap, ArgRefMap, SentencePos, BodySet),
   ExcludeSet = set.union(RstrSet,BodySet),
-  io.print(ExcludeSet,!IO),
-  io.nl(!IO),
 
   multi_map.lookup(RelMap,TopHandle,LL),
   {RelHandleTop,_,_,_} = det_head(LL),
