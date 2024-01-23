@@ -223,18 +223,24 @@ for line in `cat _predicate_table`; do
     fi         
     avarIn=Args${ArgPos}
     avarOut=Args$((${ArgPos} + 1))
-      echo "                    varset.new_named_var(to_string(${VarNames[$ArgPos]}),Var$ArgPos,$vvarIn,VarSetTmp$ArgPos),"
     if test ${Types[$ArgPos]} = mrs_rel_handle; then
       echo "                    ((if multi_map.contains(RelMap,${Vars[$ArgPos]}) then"
       echo "                        TL$ArgPos = multi_map.lookup(RelMap,${Vars[$ArgPos]}),"
-      echo "                        RL$ArgPos = list.map(func({RelHandleA,_,_,_}) = Ret :- Ret = RelHandleA,TL$ArgPos)"
+      echo "                        RL$ArgPos = list.map(func({RelHandleA,_,_,_}) = Ret :- Ret = RelHandleA,TL$ArgPos),"
+      echo "                        list.length(RL$ArgPos,LenRL$ArgPos),"
+      echo "                        (if LenRL$ArgPos = 1 then"
+      echo "                          varset.new_named_var(to_string(${VarNames[$ArgPos]}),Var$ArgPos,$vvarIn,VarSetTmp$ArgPos)"
+      echo "                        else"
+      echo "                          varset.new_named_var(string.capitalize_first(to_string(${VarNames[$ArgPos]})),Var$ArgPos,$vvarIn,VarSetTmp$ArgPos))"
       echo "                      else"
+      echo "                        varset.new_named_var(to_string(${VarNames[$ArgPos]}),Var$ArgPos,$vvarIn,VarSetTmp$ArgPos),"
       echo "                        RL$ArgPos = [${Vars[$ArgPos]}]),"
       echo "                     list.foldl3(pred(RelHandleA::in,S0In::in,S0Out::out,C0In::in,C0Out::out,V0In::in,V0Out::out) is det :-"
       echo "                       expandArg(RelHandle,RelMap,ArgMap,ExcludeRelSet,wrap_rel_handle(RelHandleA),S0In,S0Out,C0In,C0Out,V0In,V0Out),"
       echo "                       RL$ArgPos,$svarIn,$svarOut,[],Arg${ArgPos},VarSetTmp$ArgPos,$vvarOut)"
       echo "                     ),"
     else
+      echo "                    varset.new_named_var(to_string(${VarNames[$ArgPos]}),Var$ArgPos,$vvarIn,VarSetTmp$ArgPos),"
       echo "                    expandArg(RelHandle,RelMap,ArgMap,ExcludeRelSet,${WrapExprs[$ArgPos]},$svarIn,$svarOut,[],Arg$ArgPos,VarSetTmp$ArgPos,$vvarOut),"
     fi
     echo "                    list.append($avarIn,"
@@ -252,7 +258,7 @@ cat << EOF
                                            term.functor(term.atom("semidet"), [], Context)],
                                           Context),
   				      list.foldl(func(Statement,Acc) = NewAcc :- NewAcc = term.functor(term.atom(","),[Acc,Statement],Context),
-                                                   Arg$ArgPos,
+                                                 Arg$ArgPos,
   						 term.functor(term.atom("="),[term.variable(RetVar,Context),term.variable(Var$ArgPos,Context)],Context))
 				       ],Context)],Context)]),
                                  $avarOut),
