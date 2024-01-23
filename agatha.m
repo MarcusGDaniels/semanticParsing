@@ -167,7 +167,7 @@ main(!IO) :-
 		     [], TermsOut, 
 		     VarSetTmp0, VarSetOut0),
          Term = expandList(TermsOut,Context),
-	 (if det_head(L) = K, false then
+	 (if det_head(L) = K then
            IoOut = IoIn
          else
 	   TermFunc = term.functor(atom("member"),[term.variable(Var,Context),Term],Context),
