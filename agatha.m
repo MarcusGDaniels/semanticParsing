@@ -119,10 +119,10 @@ write_rel(RelMap,ArgMap,ExcludeSet,Context,RelHandle,SignaturesIn,SignaturesOut,
 :- func expandList(list(term(T)),term.context) = term(T) is det.
 expandList(L,Context) = Ret :- 
   list.length(L,Len),
-  (if Len = 0 then
-    Ret = term.functor(term.atom("[]"),[],Context)
-  else
-    Ret = term.functor(term.atom("[|]"),[det_head(L),expandList(det_tail(L),Context)],Context)).
+  (if Len >= 2 then
+     Ret = term.functor(term.atom(","),[det_head(L),expandList(det_tail(L),Context)],Context)
+   else
+     Ret = det_head(L)).
 
 main(!IO) :-
   SentencePos = 0,
@@ -151,7 +151,7 @@ main(!IO) :-
   
   map.foldl2(pred(K::in,V::in,VarSetIn0::in,VarSetOut0::out,IoIn::di,IoOut::uo) is det :- 
      (mrs_rel_handle(mrs_handle(Name)) = K,
-      varset.new_named_var(string.capitalize_first(Name),Var,VarSetIn0,VarSetTmp0),
+      varset.new_named_var(Name,Var,VarSetIn0,VarSetTmp0),
       L = list.map(func({RelHandle1,_,_,_}) = Ret is det :- Ret = RelHandle1,V),
       list.length(L,Len),
       (if Len > 1 then
@@ -168,7 +168,7 @@ main(!IO) :-
 	 (if det_head(L) = K then
            IoOut = IoIn
          else
-	   TermFunc = term.functor(atom("member"),[term.variable(Var,Context),Term],Context),
+	   TermFunc = term.functor(atom(":-"),[term.variable(Var,Context),Term],Context),
            term_io.write_term(VarSetOut0,TermFunc,IoIn,Io0),
 	   %Io0 = IoIn,
 	   %pretty_printer.write_doc(pretty_printer.format(Term),Io0,Io1),

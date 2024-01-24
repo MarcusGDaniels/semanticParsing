@@ -112,6 +112,7 @@ for line in `cat _predicate_table`; do
       mrs_indiv)
         Var=Indiv${IndivPos}
         VarName=$Var
+	To_String=to_free_label
 	Rhs=$Var
         IndivPos=$((${IndivPos} + 1))
         WrapExpr="wrap_indiv(${Var})"
@@ -119,6 +120,7 @@ for line in `cat _predicate_table`; do
       mrs_inst)
         Var=Inst${InstPos}
         VarName=$Var
+	To_String=to_free_label
 	Rhs=$Var
         InstPos=$((${InstPos} + 1))
         WrapExpr="wrap_inst(${Var})"
@@ -126,6 +128,7 @@ for line in `cat _predicate_table`; do
       mrs_event)
         Var=Event${EventPos}
         VarName=$Var
+	To_String=to_string
 	Rhs=$Var
         EventPos=$((${EventPos} + 1))
         WrapExpr="wrap_event(${Var})"
@@ -133,6 +136,7 @@ for line in `cat _predicate_table`; do
       mrs_rel_handle)
 	Var="mrs_rel_handle(RelHandle${RelHandlePos})"
         VarName=RelHandle${RelHandlePos}
+	To_String=to_string
         Rhs="mrs_rel_handle(RelHandle${RelHandlePos})"
         RelHandlePos=$((${RelHandlePos} + 1))
         WrapExpr="wrap_rel_handle(${Var})"
@@ -140,6 +144,7 @@ for line in `cat _predicate_table`; do
       mrs_rstr_handle)
 	Var="mrs_rstr_handle(RstrHandle${RstrHandlePos})"
         VarName=RstrHandle${RstrHandlePos}
+	To_String=to_string
 	Types[${ArgPos}]=mrs_rel_handle
 	Rhs="mrs_rel_handle(RstrHandle${RstrHandlePos})"
         RstrHandlePos=$((${RstrHandlePos} + 1))
@@ -148,6 +153,7 @@ for line in `cat _predicate_table`; do
       mrs_body_handle)
 	Var="mrs_body_handle(BodyHandle${BodyHandlePos})"
         VarName=BodyHandle${BodyHandlePos}
+	To_String=to_string
 	Types[${ArgPos}]=mrs_rel_handle
 	Rhs="mrs_rel_handle(BodyHandle${BodyHandlePos})"
         BodyHandlePos=$((${BodyHandlePos} + 1))
@@ -156,6 +162,7 @@ for line in `cat _predicate_table`; do
       mrs_carg)
         Var=Carg${CargPos}
 	VarName=$Var
+	To_String=to_string
 	Rhs=$Var
         CargPos=$((${CargPos} + 1))
         WrapExpr="wrap_carg(${Var})"
@@ -163,6 +170,7 @@ for line in `cat _predicate_table`; do
       mrs_unknown)
         Var=Unk${UnknownPos}
 	VarName=$Var
+	To_String=to_string
 	Rhs=$Var
         UnknownPos=$((${UnknownPos} + 1))
         WrapExpr="wrap_unknown(${Var})"
@@ -173,6 +181,7 @@ for line in `cat _predicate_table`; do
      esac
      Args="${Args}${delim}${Var}"
      ArgAry[${ArgPos}]=${Var}
+     To_Strings[${ArgPos}]=${To_String}
      Vars[${ArgPos}]=$Rhs
      VarNames[${ArgPos}]=$VarName
      WrapExprs[${ArgPos}]=$WrapExpr
@@ -185,9 +194,9 @@ for line in `cat _predicate_table`; do
   echo "    list.foldl3(pred({${Args}}::in,SignaturesIn0::in,SignaturesOut0::out,CallsIn0::in,CallsOut0::out,VarSetIn0::in,VarSetOut0::out) is det :-"
   echo "               (Cmd = string.append_list([\"${pred}(\","
   for ArgPos in `seq 0 $((${ArgCount} - 2))`; do
-      echo "                  to_string(${ArgAry[${ArgPos}]}),\",\","
+      echo "                  ${To_Strings[$ArgPos]}(${ArgAry[${ArgPos}]}),\",\","
   done      
-  echo "                  to_string(${ArgAry[$((${ArgCount}-1))]}), \")\"]),"
+  echo "                  ${To_Strings[$((${ArgCount}-1))]}(${ArgAry[$((${ArgCount}-1))]}), \")\"]),"
   echo "                (if set.member(Cmd,SignaturesIn0) then"
   echo "                   SignaturesOut0 = SignaturesIn0,"
   echo "                   CallsOut0 = CallsIn0,"
@@ -232,7 +241,7 @@ for line in `cat _predicate_table`; do
       echo "                          mrs_rel_handle(mrs_handle(VarNameX$ArgPos)) = det_head(RL$ArgPos),"
       echo "                          varset.new_named_var(VarNameX$ArgPos,Var$ArgPos,$vvarIn,VarSetTmp$ArgPos)"
       echo "                        else"
-      echo "                          varset.new_named_var(string.capitalize_first(to_string(${VarNames[$ArgPos]})),Var$ArgPos,$vvarIn,VarSetTmp$ArgPos))"
+      echo "                          varset.new_named_var(to_string(${VarNames[$ArgPos]}),Var$ArgPos,$vvarIn,VarSetTmp$ArgPos))"
       echo "                      else"
       echo "                        varset.new_named_var(to_string(${VarNames[$ArgPos]}),Var$ArgPos,$vvarIn,VarSetTmp$ArgPos),"
       echo "                        RL$ArgPos = [${Vars[$ArgPos]}]),"
@@ -241,7 +250,7 @@ for line in `cat _predicate_table`; do
       echo "                       RL$ArgPos,$svarIn,$svarOut,[],Arg${ArgPos},VarSetTmp$ArgPos,$vvarOut)"
       echo "                     ),"
     else
-      echo "                    varset.new_named_var(to_string(${VarNames[$ArgPos]}),Var$ArgPos,$vvarIn,VarSetTmp$ArgPos),"
+      echo "                    varset.new_named_var(${To_Strings[$ArgPos]}(${VarNames[$ArgPos]}),Var$ArgPos,$vvarIn,VarSetTmp$ArgPos),"
       echo "                    expandArg(RelHandle,RelMap,ArgMap,ExcludeRelSet,${WrapExprs[$ArgPos]},$svarIn,$svarOut,[],Arg$ArgPos,VarSetTmp$ArgPos,$vvarOut),"
     fi
     echo "                    list.append($avarIn,"

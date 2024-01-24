@@ -74,6 +74,11 @@
   mode to_string(in) = out is det
 ].
 
+:- typeclass mrs_free_print(T) where [
+  func to_free_label(T) = string,
+  mode to_free_label(in) = out is det
+].
+
 :- type mrs_alg_attr ---> attr_carg(mrs_carg)
                       ; attr_inst(string,mrs_inst)
                       ; attr_rstr(mrs_rstr_handle)
@@ -100,8 +105,11 @@
 :- instance mrs_attr(mrs_unknown).
 
 :- instance mrs_print(mrs_inst).
-:- instance mrs_print(mrs_event).
 :- instance mrs_print(mrs_indiv).
+:- instance mrs_free_print(mrs_inst).
+:- instance mrs_free_print(mrs_indiv).
+
+:- instance mrs_print(mrs_event).
 :- instance mrs_print(mrs_carg).
 :- instance mrs_print(mrs_rel_t).
 :- instance mrs_print(mrs_rel_qeq_t).
@@ -165,10 +173,18 @@ extract_handle(Key,Val) = Ret :-
   to_string(mrs_inst(Val)) = Val
 ].
 
+:- instance mrs_free_print(mrs_inst) where [
+  to_free_label(mrs_inst(Val)) = string.capitalize_first(Val)
+].
+
 :- instance mrs_print(mrs_indiv) where [
   to_string(mrs_indiv(Val)) = Val
-]
-	.
+].
+
+:- instance mrs_free_print(mrs_indiv) where [
+  to_free_label(mrs_indiv(Val)) = string.capitalize_first(Val)
+].
+
 :- instance mrs_print(mrs_unknown) where [
   to_string(mrs_unknown(Val)) = Val
 ].
