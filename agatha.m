@@ -15,6 +15,7 @@
 :- import_module set.
 :- import_module string.
 :- import_module multi_map.
+:- import_module assoc_list.
 :- import_module map.
 :- import_module pair.
 :- import_module require.
@@ -29,17 +30,27 @@
 :- import_module sentence_collectArgRefs.
 :- import_module sentence_unpackRelation.
 
+:- import_module sentence_vars_event0.
+
 :- pred createMaps(multi_map(mrs_rel_handle,{mrs_rel_handle,string,string,preds}),
                    multi_map(mrs_types, mrs_rel_handle),
-                   multi_map(mrs_types, mrs_rel_handle)).
-:- mode createMaps(in,out,out) is det.
-createMaps(RelMap,ArgMap,ArgRefMap) :-
-  multi_map.values(RelMap,RelMapValues),
+                   multi_map(mrs_types, mrs_rel_handle),
+		   multi_map(mrs_rel_handle, mrs_types)).
+:- mode createMaps(in,out,out,out) is det.
+createMaps(RelMap,ArgMap,ArgRefMap,ArgRevMap) :-
+  multi_map.values(RelMap,RelMapValues0),
+  RelMapValuesSet = set.from_list(RelMapValues0),
+  RelMapValues = set.to_sorted_list(RelMapValuesSet),
   list.foldl(pred({RelHandle0,_,_,Pred0}::in,ArgMapIn0::in,ArgMapOut0::out) is det :-
               collectArguments(RelMap,RelHandle0,Pred0,ArgMapIn0,ArgMapOut0),
              RelMapValues,multi_map.init,ArgMap),
   list.foldl(pred({RelHandle0,_,_,Pred0}::in,ArgRefMapIn0::in,ArgRefMapOut0::out) is det :- collectArgRefs(RelMap,RelHandle0,Pred0,ArgRefMapIn0,ArgRefMapOut0),
-             RelMapValues,multi_map.init,ArgRefMap).
+             RelMapValues,multi_map.init,ArgRefMap),
+  map.foldl(pred(K::in,L::in,RevMapIn::in,RevMapOut::out) is det :-
+              list.foldl(pred(V::in,RevMapIn0::in,RevMapOut0::out) is det :- 
+	                   multi_map.add(V,K,RevMapIn0,RevMapOut0),
+			 L, RevMapIn,RevMapOut),
+            ArgRefMap,multi_map.init,ArgRevMap).
 
 :- pred rstr_keys(multi_map(mrs_rel_handle,{mrs_rel_handle,string,string,preds}), multi_map(mrs_types, mrs_rel_handle), int, set(mrs_rel_handle)).
 :- mode rstr_keys(in, in, in, out) is det.
@@ -131,7 +142,7 @@ main(!IO) :-
   % map.foldl(pred(K::in, V::in, MapIn::in, MapOut::out) is det :- 
   %  (list.map(pred({RelHandle0,_,_,Pred0}::in,Ret::out) is det :- Ret = {RelHandle0,"","",Pred0},V,L),
   %   map.det_insert(K,L,MapIn,MapOut)),RelMap0,map.init,RelMap),
-  createMaps(RelMap,ArgMap,ArgRefMap),
+  createMaps(RelMap,ArgMap,ArgRefMap,ArgRevMap),
   rstr_keys(RelMap, ArgRefMap, SentencePos, RstrSet),
   body_keys(RelMap, ArgRefMap, SentencePos, BodySet),
   ExcludeSet = set.union(RstrSet,BodySet),
