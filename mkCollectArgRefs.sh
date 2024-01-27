@@ -24,7 +24,7 @@ cat << EOF
 :- import_module unsafe.
 
 :- pragma promise_pure(collectArgRefs/5).
-collectArgRefs(RelMap,RelHandle0,Pred,ArgRefMapIn,ArgRefMapOut) :-
+collectArgRefs(RelMap,RelHandleIn,Pred,ArgRefMapIn,ArgRefMapOut) :-
 EOF
 
 sed -n '/mrs/s/.*pred_\([a-z0-9_]*\)(pred(\(mrs_rel_handle,[^)]*\)))/\1\,\2/p' sentence_predicates.m | tr -d ' ' | tr -d . > _predicate_table
@@ -102,7 +102,7 @@ for line in `cat _predicate_table`; do
      shift
      ArgPos=$((${ArgPos} + 1))
   done
-  echo "    solutions(pred({${Args}}::out) is nondet :- ${pred}(${Args}), L),"
+  echo "    solutions(pred({${Args}}::out) is nondet :- (${pred}(${Args}), RelHandle0 = RelHandleIn), L),"
   ArgCount=${ArgPos}
   ArgPos=0
   while test $ArgPos -lt $ArgCount; do
@@ -128,7 +128,7 @@ for line in `cat _predicate_table`; do
     else
       ArgRefMapOut=ArgRefMap${ArgPos}
     fi
-    echo -n "    list.foldl(pred({${Pattern}}::in,AIn::in,AOut::out) is det :- AOut = multi_map.add(AIn,${WrapExprs[$ArgPos]},${ArgAry[0]}),L,${ArgRefMapIn},${ArgRefMapOut})"
+    echo -n "    list.foldl(pred({${Pattern}}::in,AIn::in,AOut::out) is det :- AOut = multi_map.add(AIn,${WrapExprs[$ArgPos]},RelHandleIn),L,${ArgRefMapIn},${ArgRefMapOut})"
     ArgPos=$(($ArgPos + 1))
     if test $ArgPos -lt $ArgCount; then
       echo ,
