@@ -61,7 +61,7 @@ for line in `cat _predicate_table`; do
 	WrapExpr="wrap_inst(${Var})"
         ;;
       mrs_event)
-        Var=Event${InstPos}
+        Var=Event${EventPos}
         EventPos=$((${EventPos} + 1))
 	WrapExpr="wrap_event(${Var})"
         ;;

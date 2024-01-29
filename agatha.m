@@ -32,6 +32,16 @@
 
 :- import_module sentence_vars_event0.
 
+:- pred invertArgMap(multi_map(mrs_types, mrs_rel_handle),
+                     multi_map(mrs_rel_handle, mrs_types)).
+:- mode invertArgMap(in, out).
+invertArgMap(ArgRefMap, ArgRevMap) :-
+  map.foldl(pred(K::in,L::in,RevMapIn::in,RevMapOut::out) is det :-
+              list.foldl(pred(V::in,RevMapIn0::in,RevMapOut0::out) is det :- 
+	                   multi_map.add(V,K,RevMapIn0,RevMapOut0),
+			 L, RevMapIn,RevMapOut),
+            ArgRefMap,multi_map.init,ArgRevMap).
+
 :- pred createMaps(multi_map(mrs_rel_handle,{mrs_rel_handle,string,string,preds}),
                    multi_map(mrs_types, mrs_rel_handle),
                    multi_map(mrs_types, mrs_rel_handle),
@@ -46,11 +56,7 @@ createMaps(RelMap,ArgMap,ArgRefMap,ArgRevMap) :-
              RelMapValues,multi_map.init,ArgMap),
   list.foldl(pred({RelHandle0,_,_,Pred0}::in,ArgRefMapIn0::in,ArgRefMapOut0::out) is det :- collectArgRefs(RelMap,RelHandle0,Pred0,ArgRefMapIn0,ArgRefMapOut0),
              RelMapValues,multi_map.init,ArgRefMap),
-  map.foldl(pred(K::in,L::in,RevMapIn::in,RevMapOut::out) is det :-
-              list.foldl(pred(V::in,RevMapIn0::in,RevMapOut0::out) is det :- 
-	                   multi_map.add(V,K,RevMapIn0,RevMapOut0),
-			 L, RevMapIn,RevMapOut),
-            ArgRefMap,multi_map.init,ArgRevMap).
+  invertArgMap(ArgRefMap,ArgRevMap).
 
 :- pred rstr_keys(multi_map(mrs_rel_handle,{mrs_rel_handle,string,string,preds}), multi_map(mrs_types, mrs_rel_handle), int, set(mrs_rel_handle)).
 :- mode rstr_keys(in, in, in, out) is det.
@@ -135,6 +141,32 @@ expandList(L,Context) = Ret :-
    else
      Ret = det_head(L)).
 
+:- pred mkCall(multi_map(mrs_rel_handle,{mrs_rel_handle,string,string,preds}),
+               mrs_rel_handle,
+	       preds,
+	       int,
+	       term.context,
+	       varset,
+	       varset,
+	       term(generic)).
+:- mode mkCall(in,in,in,in,in,in,out,out) is det.
+:- pragma promise_pure(mkCall/8).
+mkCall(RelMap,RelHandle,Pred,PosIn,Context,VarSetIn,VarSetOut,Term) :-
+  collectArgRefs(RelMap,RelHandle,Pred,multi_map.init,TmpArgRefMap),
+  invertArgMap(TmpArgRefMap,TmpArgRevMap),
+  multi_map.lookup(TmpArgRevMap,RelHandle,Args),
+  L = list.filter_map(func(Arg) = Inst is semidet :- wrap_inst(mrs_inst(Inst)) = Arg, Args),
+  sort(L,LS),
+  list.foldl2(pred(VarName::in,VarSetIn0::in,VarSetOut0::out,Lin::in,Lout::out) is det :- 
+    (varset.new_named_var(string.capitalize_first(VarName),Var,VarSetIn0,VarSetOut0),
+     Lout = list.cons(Var,Lin)),
+    LS, VarSetIn,VarSetOut,[],RVL),
+  list.reverse(RVL,VL),
+  mrs_rel_handle(mrs_handle(RelName)) = RelHandle,
+  FuncName = RelName ++ "_" ++ string.int_to_string(PosIn),
+  term.var_list_to_term_list(VL, ArgTerms),
+  Term = term.functor(atom(FuncName),ArgTerms,Context).
+
 main(!IO) :-
   SentencePos = 0,
   Sentence = det_index0(sentences.sentences,SentencePos),
@@ -163,28 +195,30 @@ main(!IO) :-
   map.foldl2(pred(K::in,V::in,VarSetIn0::in,VarSetOut0::out,IoIn::di,IoOut::uo) is det :- 
      (mrs_rel_handle(mrs_handle(Name)) = K,
       varset.new_named_var(Name,Var,VarSetIn0,VarSetTmp0),
-      L = list.map(func({RelHandle1,_,_,_}) = Ret is det :- Ret = RelHandle1,V),
-      list.length(L,Len),
+      ValuesSet = set.from_list(V),
+      ValuesList = set.to_sorted_list(ValuesSet),
+
+      list.length(ValuesList,Len),
       (if Len > 1 then
-        (list.foldl3(pred(RelHandle1::in,PosIn1::in,PosOut1::out,TermIn1::in,TermOut1::out,VarSetIn1::in,VarSetOut1::out) is det :-  
-                       (mrs_rel_handle(mrs_handle(SubNameN)) = RelHandle1,
-                        varset.new_named_var(SubNameN ++ "_" ++ string.int_to_string(PosIn1),VarSub1,VarSetIn1,VarSetOut1),
-			list.append(TermIn1,[term.variable(VarSub1,Context)],TermOut1),
+        (list.foldl3(pred({RelHandle1,_,_,Pred1}::in,PosIn1::in,PosOut1::out,TermsIn1::in,TermsOut1::out,VarSetIn1::in,VarSetOut1::out) is det :-  
+		       (mkCall(RelMap,RelHandle1,Pred1,PosIn1,Context,VarSetIn1,VarSetOut1,Term1),
+		        TermsOut1 = list.cons(Term1,TermsIn1),
 	                PosOut1 = PosIn1 + 1),
-                     L,
+                     ValuesList,
 		     0, PosCount,
 		     [], TermsOut, 
 		     VarSetTmp0, VarSetOut0),
-         Term = expandList(TermsOut,Context),
-	 (if det_head(L) = K then
+         Term = expandList(reverse(TermsOut),Context),
+	 (if det_head(V) = {K,_,_,_} then
            IoOut = IoIn
          else
+	   Io0 = IoIn,
 	   TermFunc = term.functor(atom(":-"),[term.variable(Var,Context),Term],Context),
-           term_io.write_term(VarSetOut0,TermFunc,IoIn,Io0),
+           term_io.write_term(VarSetOut0,TermFunc,Io0,Io1),
 	   %Io0 = IoIn,
 	   %pretty_printer.write_doc(pretty_printer.format(Term),Io0,Io1),
-	   io.print(".",Io0,Io1),
-	   io.nl(Io1,IoOut))
+	   io.print(".",Io1,Io2),
+	   io.nl(Io2,IoOut))
 	 )
        else
 	VarSetOut0 = VarSetTmp0,
