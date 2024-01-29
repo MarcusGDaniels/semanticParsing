@@ -123,7 +123,8 @@ write_rel(RelMap,ArgMap,ExcludeSet,Context,RelHandle,SignaturesIn,SignaturesOut,
      list.foldl4(pred({RelHandle0,_,_,Pred0}::in,PosIn0::in,PosOut0::out,SignaturesIn0::in,SignaturesOut0::out,VarSetIn0::in,VarSetOut0::out,IoIn0::di,IoOut0::uo) is det :- 
        (sentence_unpackRelation.unpackRelation(RelMap,ArgMap,ExcludeSet,RelHandle0,Pred0,SignaturesIn0,SignaturesOut0,[],Calls0,VarSetIn0,VarSet0),
         mrs_rel_handle(mrs_handle(TermName)) = RelHandle0,
-        varset.new_named_var(TermName ++ "_" ++ string.int_to_string(PosIn0),Lhs,VarSet0,VarSetOut0),
+	VarName = TermName ++ "_" ++ string.int_to_string(PosIn0),
+	newVar(VarName,Lhs,VarSet0,VarSetOut0),
         list.foldl(pred(Call0::in,IoIn1::di,IoOut1::uo) is det :- 
           (term_io.write_term(VarSetOut0,term.functor(atom(":-"),[term.variable(Lhs,Context),Call0],Context),IoIn1,Io0),
            io.print(".",Io0,Io1),
@@ -143,6 +144,15 @@ expandList(L,Context) = Ret :-
    else
      Ret = det_head(L)).
 
+:- pred newVar(string,var(T),varset(T),varset(T)).
+:- mode newVar(in,out,in,out) is det.
+newVar(VarName,Var,VarSetIn,VarSetOut) :-
+  if list.find_first_match(pred(VarTest::in) is semidet :- varset.search_name(VarSetIn,VarTest,VarName),varset.vars(VarSetIn),MatchedVar) then 
+    Var = MatchedVar,
+    VarSetOut = VarSetIn
+  else
+    varset.new_named_var(VarName,Var,VarSetIn,VarSetOut).
+
 :- pred mkCall(multi_map(mrs_rel_handle,{mrs_rel_handle,string,string,preds}),
                mrs_rel_handle,
 	       preds,
@@ -160,7 +170,7 @@ mkCall(RelMap,RelHandle,Pred,PosIn,Context,VarSetIn,VarSetOut,Term) :-
   L = list.filter_map(func(Arg) = Inst is semidet :- wrap_inst(mrs_inst(Inst)) = Arg, Args),
   sort(L,LS),
   list.foldl2(pred(VarName::in,VarSetIn0::in,VarSetOut0::out,Lin::in,Lout::out) is det :- 
-    (varset.new_named_var(string.capitalize_first(VarName),Var,VarSetIn0,VarSetOut0),
+    (newVar(string.capitalize_first(VarName),Var,VarSetIn0,VarSetOut0),
      Lout = list.cons(Var,Lin)),
     LS, VarSetIn,VarSetOut,[],RVL),
   list.reverse(RVL,VL),
