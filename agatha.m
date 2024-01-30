@@ -15,8 +15,8 @@
 :- import_module set.
 :- import_module string.
 :- import_module multi_map.
-:- import_module assoc_list.
 :- import_module map.
+:- import_module assoc_list.
 :- import_module pair.
 :- import_module require.
 :- import_module unsafe.
@@ -108,20 +108,24 @@ body_keys(RelMap, ArgRefMap, SentencePos, BodySet) :-
 
 :- pred write_rel(multi_map(mrs_rel_handle,{mrs_rel_handle,string,string,preds}),
                   multi_map(mrs_types, mrs_rel_handle),
+                  map(mrs_rel_handle, varset(T)),
 		  set(mrs_rel_handle),
 		  term.context,
 		  mrs_rel_handle,
 		  set(string),set(string),
                   varset(T),varset(T),
 		  io,io).
-:- mode write_rel(in,in,in,in,in,in,out,in,out,di,uo).
-write_rel(RelMap,ArgMap,ExcludeSet,Context,RelHandle,SignaturesIn,SignaturesOut,VarSetIn,VarSetOut,!IO) :-
+:- mode write_rel(in,in,in,in,in,in, in,out,in,out,di,uo).
+write_rel(RelMap,ArgMap,VarMap,ExcludeSet,Context,RelHandle,
+          SignaturesIn,SignaturesOut,
+          VarSetIn,VarSetOut,
+          !IO) :-
   if multi_map.contains(RelMap,RelHandle) then
     (map.lookup(RelMap,RelHandle,LL),
      Set = set.from_list(LL),
      SL = set.to_sorted_list(Set),
      list.foldl4(pred({RelHandle0,_,_,Pred0}::in,PosIn0::in,PosOut0::out,SignaturesIn0::in,SignaturesOut0::out,VarSetIn0::in,VarSetOut0::out,IoIn0::di,IoOut0::uo) is det :- 
-       (sentence_unpackRelation.unpackRelation(RelMap,ArgMap,ExcludeSet,RelHandle0,Pred0,SignaturesIn0,SignaturesOut0,[],Calls0,VarSetIn0,VarSet0),
+       (sentence_unpackRelation.unpackRelation(RelMap,ArgMap,VarMap,ExcludeSet,RelHandle0,Pred0,SignaturesIn0,SignaturesOut0,[],Calls0,VarSetIn0,VarSet0),
         mrs_rel_handle(mrs_handle(TermName)) = RelHandle0,
 	VarName = TermName ++ "_" ++ string.int_to_string(PosIn0),
 	newVar(VarName,Lhs,VarSet0,VarSetOut0),
@@ -160,19 +164,29 @@ newVar(VarName,Var,VarSetIn,VarSetOut) :-
 	       term.context,
 	       varset,
 	       varset,
+	       varset,
+	       varset,
 	       term(generic)).
-:- mode mkCall(in,in,in,in,in,in,out,out) is det.
-:- pragma promise_pure(mkCall/8).
-mkCall(RelMap,RelHandle,Pred,PosIn,Context,VarSetIn,VarSetOut,Term) :-
+:- mode mkCall(in,in,in,in,in,in,out,in,out,out) is det.
+:- pragma promise_pure(mkCall/10).
+mkCall(RelMap,RelHandle,Pred,PosIn,Context,
+       VarSetLocalIn,VarSetLocalOut,
+       VarSetGlobalIn,VarSetGlobalOut,
+       Term) :-
   collectArgRefs(RelMap,RelHandle,Pred,multi_map.init,TmpArgRefMap),
   invertArgMap(TmpArgRefMap,TmpArgRevMap),
   multi_map.lookup(TmpArgRevMap,RelHandle,Args),
   L = list.filter_map(func(Arg) = Inst is semidet :- wrap_inst(mrs_inst(Inst)) = Arg, Args),
   sort(L,LS),
-  list.foldl2(pred(VarName::in,VarSetIn0::in,VarSetOut0::out,Lin::in,Lout::out) is det :- 
-    (newVar(string.capitalize_first(VarName),Var,VarSetIn0,VarSetOut0),
+  list.foldl3(pred(VarName::in,
+                   VarSetLocalIn0::in,VarSetLocalOut0::out,
+		   VarSetGlobalIn0::in,VarSetGlobalOut0::out,
+		   Lin::in,Lout::out) is det :- 
+    (SymName = string.capitalize_first(VarName),
+     newVar(SymName,Var,VarSetLocalIn0,VarSetLocalOut0),
+     newVar(SymName,GlobalVar,VarSetGlobalIn0,VarSetGlobalOut0),
      Lout = list.cons(Var,Lin)),
-    LS, VarSetIn,VarSetOut,[],RVL),
+    LS, VarSetLocalIn,VarSetLocalOut,VarSetGlobalIn,VarSetGlobalOut,[],RVL),
   list.reverse(RVL,VL),
   mrs_rel_handle(mrs_handle(RelName)) = RelHandle,
   FuncName = RelName ++ "_" ++ string.int_to_string(PosIn),
@@ -197,46 +211,67 @@ main(!IO) :-
   set.singleton_set(RelHandleTop,TopSetSingleton),
 
   Context = term.context_init,
+
+  VarSetIn = varset.init,
  
-  map.foldl(pred(K::in,V::in,IoIn::di,IoOut::uo) is det :- 
-     (VarSetIn0 = varset.init,
-      mrs_rel_handle(mrs_handle(Name)) = K,
-      varset.new_named_var(Name,Var,VarSetIn0,VarSetTmp0),
-      VarSetArgs = varset.init,
+  map.foldl3(pred(K::in,V::in,
+                  VarMapIn::in,VarMapOut::out,
+		  VarSetIn::in,VarSetOut::out,
+                  IoIn::di,IoOut::uo) is det :- 
+     (mrs_rel_handle(mrs_handle(Name)) = K,
+      varset.new_named_var(Name,GlobalVar,VarSetIn,VarSetTmp),
+      VarSetLocal0 = varset.init,
+      varset.new_named_var(Name,Var,VarSetLocal0,_),
+      VarSetArgs0 = varset.init,
       ValuesSet = set.from_list(V),
       ValuesList = set.to_sorted_list(ValuesSet),
 
       list.length(ValuesList,Len),
       (if Len > 1 then
-        (list.foldl3(pred({RelHandle1,_,_,Pred1}::in,PosIn1::in,PosOut1::out,TermsIn1::in,TermsOut1::out,VarSetIn1::in,VarSetOut1::out) is det :-  
-		       (mkCall(RelMap,RelHandle1,Pred1,PosIn1,Context,VarSetIn1,VarSetOut1,Term1),
+        (list.foldl4(pred({RelHandle1,_,_,Pred1}::in,
+	                  PosIn1::in,PosOut1::out,
+			  TermsIn1::in,TermsOut1::out,
+			  VarSetLocalIn1::in,VarSetLocalOut1::out,
+			  VarSetGlobalIn1::in,VarSetGlobalOut1::out) is det :-  
+		       (mkCall(RelMap,RelHandle1,Pred1,PosIn1,Context,VarSetLocalIn1,VarSetLocalOut1,VarSetGlobalIn1,VarSetGlobalOut1,Term1),
 		        TermsOut1 = list.cons(Term1,TermsIn1),
 	                PosOut1 = PosIn1 + 1),
                      ValuesList,
 		     0, PosCount,
 		     [], TermsOut, 
-		     VarSetArgs, VarSetArgsOut),
+		     VarSetArgs0,VarSetArgs1,
+		     VarSetTmp,VarSetOut),
          Term = expandList(reverse(TermsOut),Context),
 	 (if det_head(V) = {K,_,_,_} then
-           IoOut = IoIn
+           IoOut = IoIn,
+	   VarMapOut = VarMapIn
          else
 	   Io0 = IoIn,
-	   varset.vars(VarSetArgsOut,Vars),
+	   varset.vars(VarSetArgs1,Vars),
 	   var_list_to_term_list(Vars,VarTerms),
 	   TermFunc = term.functor(atom(":-"),[term.functor(atom(Name),VarTerms,Context),Term],Context),
-           term_io.write_term(VarSetArgsOut,TermFunc,Io0,Io1),
+           term_io.write_term(VarSetArgs1,TermFunc,Io0,Io1),
 	   %Io0 = IoIn,
 	   %pretty_printer.write_doc(pretty_printer.format(Term),Io0,Io1),
 	   io.print(".",Io1,Io2),
-	   io.nl(Io2,IoOut)
+	   io.nl(Io2,IoOut),
+	   VarMapOut = map.det_insert(VarMapIn,K,VarSetArgs1)
 	 ))
        else
+	VarMapOut = VarMapIn,
+	VarSetOut = VarSetIn,
         IoOut = IoIn)),
-     RelMap,!IO),
+     RelMap,map.init,VarMap,VarSetIn,VarSet0,!IO),
 
-  list.foldl3(pred(RelHandle::in,SignaturesIn0::in,SignaturesOut0::out,VarSetIn0::in,VarSetOut0::out,IoIn0::di,IoOut0::uo) is det :-
-    write_rel(RelMap,ArgMap,TopExcludeSet,Context,RelHandle,SignaturesIn0,SignaturesOut0,VarSetIn0,VarSetOut0,IoIn0,IoOut0),
-    set.to_sorted_list(ExcludeSet),set.init,Signatures0,varset.init,VarSet0,!IO),
-  write_rel(RelMap,ArgMap,ExcludeSet,Context,RelHandleTop,Signatures0,Signatures1,VarSet0,VarSet1,!IO).
+  list.foldl3(pred(RelHandle::in,
+                   SignaturesIn0::in,SignaturesOut0::out,
+		   VarSetIn0::in,VarSetOut0::out,
+		   IoIn0::di,IoOut0::uo) is det :-
+      write_rel(RelMap,ArgMap,VarMap,TopExcludeSet,Context,RelHandle,SignaturesIn0,SignaturesOut0,VarSetIn0,VarSetOut0,IoIn0,IoOut0),
+    set.to_sorted_list(ExcludeSet),
+    set.init,Signatures0,
+    VarSet0,VarSet1,
+    !IO),
+  write_rel(RelMap,ArgMap,VarMap,ExcludeSet,Context,RelHandleTop,Signatures0,Signatures1,VarSet1,VarSet2,!IO).
 
 
