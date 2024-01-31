@@ -229,7 +229,6 @@ main(!IO) :-
   RelVals = list.map(func({RelHandle0,_,_,_}) = Ret :- Ret = RelHandle0, multi_map.values(RelMap)),
   RelSet = set.from_list(RelVals),
   SimpleSet = set.difference(RelSet,TopExcludeSet),
-  io.nl(!IO),
 
   multi_map.lookup(RelMap,TopHandle,LL),
   {RelHandleTop,_,_,_} = det_head(LL),

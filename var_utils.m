@@ -9,6 +9,7 @@
 
 :- func collectVarNames(varset.varset(T)) = list(string).
 :- func collectInstanceVarNames(varset.varset(T)) = list(string).
+:- func collectRelHandles(varset.varset(T)) = list(mrs_rel_handle).
 :- func collectGlobalVars(varset.varset(T),list(string)) = list(term.var(T)).
 :- pred get_var_term(map(mrs_rel_handle,list(string)),varset(T),mrs_rel_handle,var(T),term.context,varset(T),varset(T),term(T)).
 :- mode get_var_term(in,in,in,in,in,in,out,out) is det.
@@ -25,6 +26,9 @@ collectVarNames(VarSet) = VarNames :-
 
 collectInstanceVarNames(VarSet) = VarNames :-
     list.filter(pred(VarName::in) is semidet :- string.det_index(VarName,0) = 'X',collectVarNames(VarSet),VarNames).
+
+collectRelHandles(VarSet) = RelHandles :-
+    RelHandles = list.filter_map(func(VarName) = Ret is semidet :- (string.det_index(VarName,0) = 'h',Ret = mrs_rel_handle(mrs_handle(VarName))),collectVarNames(VarSet)).
 
 collectGlobalVars(VarSet,VarNames) = GlobalVars :-
     GlobalVars = list.map(func(VarName) = Ret :-

@@ -13,7 +13,6 @@ cat << EOF
 :- import_module term.
 :- import_module varset.
 :- import_module var_utils.
-:- import_module unsafe.
 
 :- pred unpackRelation(multi_map(mrs_rel_handle,{mrs_rel_handle,string,string,preds}),
                        multi_map(mrs_types,mrs_rel_handle),
@@ -87,7 +86,15 @@ expandArg(RelHandle,RelMap,ArgMap,VarMap,ExcludeRelSet,AT,SignaturesIn,Signature
       VarSetOut0 = VarSetIn0
     else
       expandHandle(RelHandle0,RelMap,ArgMap,VarMap,ExcludeRelSet,SignaturesIn0,SignaturesOut0,CallsIn0,CallsOut0,VarSetLocalIn0,VarSetLocalOut0,VarSetIn0,VarSetOut0)),
-    Rels,SignaturesIn,SignaturesOut,CallsIn,CallsOut,VarSetLocalIn,VarSetLocalOut,VarSetIn,VarSetOut).
+    Rels,SignaturesIn,SignaturesOut,CallsIn,CallsOut,VarSetLocalIn,VarSetLocalTmp,VarSetIn,VarSetOut),
+  RL = collectRelHandles(VarSetLocalTmp),
+  list.foldl(pred(RelHandle::in,VarSetLocalIn0::in,VarSetLocalOut0::out) is det :- 
+	       ((if map.contains(VarMap,RelHandle) then
+                  VarNames = map.lookup(VarMap,RelHandle)
+                else
+                  VarNames = []),
+		list.foldl(pred(VarName::in,VSLIn::in,VSLOut::out) is det :- varset.new_named_var(VarName,_,VSLIn,VSLOut),VarNames,VarSetLocalIn0,VarSetLocalOut0)),
+	     RL,VarSetLocalTmp,VarSetLocalOut).
 
 :- pragma promise_pure(unpackRelation/14).
 unpackRelation(RelMap,ArgMap,VarMap,ExcludeRelSet,RelHandle,Pred,SignaturesIn,SignaturesOut,CallsIn,CallsOut,VarSetLocalIn,VarSetLocalOut,VarSetIn,VarSetOut) :-
@@ -258,15 +265,13 @@ for line in `cat _predicate_table`; do
       echo "                        RL$ArgPos = list.map(func({RelHandleA,_,_,_}) = Ret :- Ret = RelHandleA,TL$ArgPos),"
       echo "                        list.length(RL$ArgPos,LenRL$ArgPos),"
       echo "                        (if LenRL$ArgPos = 1 then"
-      echo "                          RH$ArgPos = det_head(RL$ArgPos),"
-      echo "                          mrs_rel_handle(mrs_handle(VarNameX$ArgPos)) = RH$ArgPos"
+      echo "                          RH$ArgPos = det_head(RL$ArgPos)"
       echo "                        else"
-      echo "                          RH$ArgPos = mrs_rel_handle(${VarNames[$ArgPos]}),"
-      echo "                          VarNameX$ArgPos = to_string(RH$ArgPos))"
+      echo "                          RH$ArgPos = mrs_rel_handle(${VarNames[$ArgPos]}))"
       echo "                      else"
       echo "                        RH$ArgPos = mrs_rel_handle(${VarNames[$ArgPos]}),"
-      echo "                        VarNameX$ArgPos = to_string(RH$ArgPos),"
       echo "                        RL$ArgPos = [${Vars[$ArgPos]}]),"
+      echo "                     mrs_rel_handle(mrs_handle(VarNameX$ArgPos)) = RH$ArgPos,"
       echo "                     varset.new_named_var(VarNameX$ArgPos,_,$vlvarIn,VarSetTmpLocal$ArgPos),"
       echo "                     varset.new_named_var(VarNameX$ArgPos,Var$ArgPos,$vvarIn,VarSetTmp$ArgPos),"
       echo "                     list.foldl4(pred(RelHandleA::in,S0In::in,S0Out::out,C0In::in,C0Out::out,VL0In::in,VL0Out::out,V0In::in,V0Out::out) is det :-"
