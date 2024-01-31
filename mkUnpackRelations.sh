@@ -12,17 +12,20 @@ cat << EOF
 :- import_module list.
 :- import_module term.
 :- import_module varset.
+:- import_module var_utils.
+:- import_module unsafe.
 
 :- pred unpackRelation(multi_map(mrs_rel_handle,{mrs_rel_handle,string,string,preds}),
                        multi_map(mrs_types,mrs_rel_handle),
-		       map(mrs_rel_handle,varset(T)),
+		       map(mrs_rel_handle,list(string)),
                        set(mrs_rel_handle),
                        mrs_rel_handle,
                        preds,
 		       set(string),set(string),
 		       list(term(T)),list(term(T)), 
+		       varset(T),varset(T),
 		       varset(T),varset(T)).
-:- mode unpackRelation(in,in,in,in,in,in,in,out,in,out,in,out) is det.
+:- mode unpackRelation(in,in,in,in,in,in,in,out,in,out,in,out,in,out) is det.
 
 :- implementation.
 :- import_module require.
@@ -35,84 +38,59 @@ cat << EOF
 :- pred expandHandle(mrs_rel_handle,
                      multi_map(mrs_rel_handle,{mrs_rel_handle,string,string,preds}),
                      multi_map(mrs_types, mrs_rel_handle),
-		     map(mrs_rel_handle,varset(T)),
+		     map(mrs_rel_handle,list(string)),
                      set(mrs_rel_handle),
                      set(string),set(string),
                      list(term(T)),list(term(T)),
+		     varset(T),varset(T),
 		     varset(T),varset(T)).
-:- mode expandHandle(in,in,in,in,in,in,out,in,out,in,out).
-:- pragma promise_pure(expandHandle/11).
-expandHandle(RelHandle0,RelMap,ArgMap,VarMap,ExcludeRelSet,SignaturesIn0,SignaturesOut0,CallsIn0,CallsOut0,VarSetIn0,VarSetOut0) :-
+:- mode expandHandle(in,in,in,in,in,in,out,in,out,in,out,in,out).
+:- pragma promise_pure(expandHandle/13).
+expandHandle(RelHandle0,RelMap,ArgMap,VarMap,ExcludeRelSet,SignaturesIn0,SignaturesOut0,CallsIn0,CallsOut0,VarSetLocalIn0,VarSetLocalOut0,VarSetIn0,VarSetOut0) :-
    % impure unsafe_perform_io(print("expandHandle:")),
    % impure unsafe_perform_io(print(RelHandle0)),
    % impure unsafe_perform_io(print("\n")),
    (if multi_map.contains(RelMap,RelHandle0) then
      multi_map.lookup(RelMap,RelHandle0,Rels0),
-     list.foldl3(pred({RelHandle0Ref,_,_,Pred0}::in,SignaturesIn1::in,SignaturesOut1::out,CallsIn1::in,CallsOut1::out,VarSetIn1::in,VarSetOut1::out) is det :- 
-		  unpackRelation(RelMap,ArgMap,VarMap,ExcludeRelSet,RelHandle0Ref,Pred0,SignaturesIn1,SignaturesOut1,CallsIn1,CallsOut1,VarSetIn1,VarSetOut1),
-		Rels0,SignaturesIn0,SignaturesOut0,CallsIn0,CallsOut0,VarSetIn0,VarSetOut0)
+     list.foldl4(pred({RelHandle0Ref,_,_,Pred0}::in,SignaturesIn1::in,SignaturesOut1::out,CallsIn1::in,CallsOut1::out,VarSetLocalIn1::in,VarSetLocalOut1::out,VarSetIn1::in,VarSetOut1::out) is det :- 
+		  unpackRelation(RelMap,ArgMap,VarMap,ExcludeRelSet,RelHandle0Ref,Pred0,SignaturesIn1,SignaturesOut1,CallsIn1,CallsOut1,VarSetLocalIn1,VarSetLocalOut1,VarSetIn1,VarSetOut1),
+		Rels0,SignaturesIn0,SignaturesOut0,CallsIn0,CallsOut0,VarSetLocalIn0,VarSetLocalOut0,VarSetIn0,VarSetOut0)
     else
       SignaturesOut0 = SignaturesIn0,
       CallsOut0 = CallsIn0,
+      VarSetLocalOut0 = VarSetLocalIn0,
       VarSetOut0 = VarSetIn0
       ).
 
 :- pred expandArg(mrs_rel_handle,
                   multi_map(mrs_rel_handle,{mrs_rel_handle,string,string,preds}),
                   multi_map(mrs_types, mrs_rel_handle),
-		  map(mrs_rel_handle, varset(T)),
+		  map(mrs_rel_handle, list(string)),
 		  set(mrs_rel_handle),
                   mrs_types,
                   set(string), set(string),
                   list(term(T)),list(term(T)),
+                  varset(T),varset(T),
                   varset(T),varset(T)).
-:- mode expandArg(in,in,in,in,in,in,in,out,in,out,in,out).
-:- pragma promise_pure(expandArg/12).
-expandArg(RelHandle,RelMap,ArgMap,VarMap,ExcludeRelSet,AT,SignaturesIn,SignaturesOut,CallsIn,CallsOut,VarSetIn,VarSetOut) :-
+:- mode expandArg(in,in,in,in,in,in,in,out,in,out,in,out,in,out).
+:- pragma promise_pure(expandArg/14).
+expandArg(RelHandle,RelMap,ArgMap,VarMap,ExcludeRelSet,AT,SignaturesIn,SignaturesOut,CallsIn,CallsOut,VarSetLocalIn,VarSetLocalOut,VarSetIn,VarSetOut) :-
   multi_map.lookup(ArgMap,AT,Rels),
   % impure unsafe_perform_io(print("expandArg:")),
   % impure unsafe_perform_io(print({AT,Rels})),
   % impure unsafe_perform_io(print("\n")),
-  list.foldl3(pred(RelHandle0::in,SignaturesIn0::in,SignaturesOut0::out,CallsIn0::in,CallsOut0::out,VarSetIn0::in,VarSetOut0::out) is det :- 
+  list.foldl4(pred(RelHandle0::in,SignaturesIn0::in,SignaturesOut0::out,CallsIn0::in,CallsOut0::out,VarSetLocalIn0::in,VarSetLocalOut0::out,VarSetIn0::in,VarSetOut0::out) is det :- 
     (if set.member(RelHandle0,ExcludeRelSet) then
       SignaturesOut0 = SignaturesIn0,
       CallsOut0 = CallsIn0,
+      VarSetLocalOut0 = VarSetLocalIn0,
       VarSetOut0 = VarSetIn0
     else
-      expandHandle(RelHandle0,RelMap,ArgMap,VarMap,ExcludeRelSet,SignaturesIn0,SignaturesOut0,CallsIn0,CallsOut0,VarSetIn0,VarSetOut0)),
-    Rels,SignaturesIn,SignaturesOut,CallsIn,CallsOut,VarSetIn,VarSetOut).
+      expandHandle(RelHandle0,RelMap,ArgMap,VarMap,ExcludeRelSet,SignaturesIn0,SignaturesOut0,CallsIn0,CallsOut0,VarSetLocalIn0,VarSetLocalOut0,VarSetIn0,VarSetOut0)),
+    Rels,SignaturesIn,SignaturesOut,CallsIn,CallsOut,VarSetLocalIn,VarSetLocalOut,VarSetIn,VarSetOut).
 
-:- func collectVarNames(varset.varset(T)) = list(string).
-collectVarNames(VarSet) = VarNames :-
-    VarNames = list.map(func(VarTest) = Ret :- if varset.search_name(VarSet,VarTest,VarName) then Ret = VarName else error("no variable"),varset.vars(VarSet)).
-
-:- func collectGlobalVars(varset.varset(T),list(string)) = list(term.var(T)).
-collectGlobalVars(VarSet,VarNames) = GlobalVars :-
-    GlobalVars = list.map(func(VarName) = Ret :-
-                           if list.find_first_match(pred(VarTest::in) is semidet :- varset.search_name(VarSet,VarTest,VarName),
-                                                    varset.vars(VarSet),
-                                                    GlobalVar) then
-                             Ret = GlobalVar
-                           else
-                             error("no value"),
-                          VarNames).
-
-:- func get_var_term(map(mrs_rel_handle,varset(T)),varset(T),mrs_rel_handle,var(T),term.context) = term(T) is det.
-get_var_term(VarMap,VarSet,RelHandle,Var,Context) = Ret :-
-  if map.contains(VarMap,RelHandle) then
-    LocalVarSet = map.lookup(VarMap,RelHandle),
-    mrs_rel_handle(mrs_handle(VarName)) = RelHandle,
- 
-    VarNames = collectVarNames(LocalVarSet),    
-    GlobalVars = collectGlobalVars(VarSet,VarNames),
-    var_list_to_term_list(GlobalVars,VarTerms),
-    Ret = term.functor(atom(VarName),VarTerms,Context)
-  else
-    Ret = term.variable(Var,Context).
-  
-
-:- pragma promise_pure(unpackRelation/12).
-unpackRelation(RelMap,ArgMap,VarMap,ExcludeRelSet,RelHandle,Pred,SignaturesIn,SignaturesOut,CallsIn,CallsOut,VarSetIn,VarSetOut) :-
+:- pragma promise_pure(unpackRelation/14).
+unpackRelation(RelMap,ArgMap,VarMap,ExcludeRelSet,RelHandle,Pred,SignaturesIn,SignaturesOut,CallsIn,CallsOut,VarSetLocalIn,VarSetLocalOut,VarSetIn,VarSetOut) :-
   Context = term.context_init,
   (
 EOF
@@ -224,7 +202,7 @@ for line in `cat _predicate_table`; do
   done
   ArgCount=${ArgPos}
   echo "    solutions(pred({${Args}}::out) is nondet :- ${pred}(RelHandle,${Args}), L),"
-  echo "    list.foldl3(pred({${Args}}::in,SignaturesIn0::in,SignaturesOut0::out,CallsIn0::in,CallsOut0::out,VarSetIn0::in,VarSetOut0::out) is det :-"
+  echo "    list.foldl4(pred({${Args}}::in,SignaturesIn0::in,SignaturesOut0::out,CallsIn0::in,CallsOut0::out,VarSetLocalIn0::in,VarSetLocalOut0::out,VarSetIn0::in,VarSetOut0::out) is det :-"
   echo "               (Cmd = string.append_list([\"${pred}(\","
   for ArgPos in `seq 0 $((${ArgCount} - 2))`; do
       echo "                  ${To_Strings[$ArgPos]}(${ArgAry[${ArgPos}]}),\",\","
@@ -233,34 +211,43 @@ for line in `cat _predicate_table`; do
   echo "                (if set.member(Cmd,SignaturesIn0) then"
   echo "                   SignaturesOut0 = SignaturesIn0,"
   echo "                   CallsOut0 = CallsIn0,"
+  echo "                   VarSetLocalOut0 = VarSetLocalIn0,"
   echo "                   VarSetOut0 = VarSetIn0"
   echo "                 else"
   echo "                   (set.insert(Cmd,SignaturesIn0,Signatures0),"
   echo "                    Args0 = [],"
   LastPos=$(($ArgCount - 1))
   echo "                    varset.new_named_var(\"Ret\",RetVar,VarSetIn0,VarSet0),"
+  echo "                    varset.new_named_var(\"Ret\",_,VarSetLocalIn0,VarSetLocal0),"
   for ArgPos in `seq 0 $LastPos`; do
     if test $ArgPos = 0; then
       svarIn=Signatures0
       vvarIn=VarSet0
+      vlvarIn=VarSetLocal0
       if test $ArgPos = $LastPos; then
         svarOut=SignaturesOut0
         vvarOut=VarSetOut0
+        vlvarOut=VarSetLocalOut0
       else
         svarOut=Signatures1
         vvarOut=VarSet1
+        vlvarOut=VarSetLocal1
       fi
     elif test $ArgPos = $LastPos; then
       svarIn=Signatures$LastPos
       svarOut=SignaturesOut0
       vvarIn=VarSet$LastPos
+      vlvarIn=VarSetLocal$LastPos
       vvarOut=VarSetOut0
+      vlvarOut=VarSetLocalOut0
       delim=""
     else
       svarIn=Signatures${ArgPos}
       svarOut=Signatures$((${ArgPos} + 1))
       vvarIn=VarSet${ArgPos}
+      vlvarIn=VarSetLocal${ArgPos}
       vvarOut=VarSet$((${ArgPos} + 1))
+      vlvarOut=VarSetLocal$((${ArgPos} + 1))
       delim=","
     fi         
     avarIn=Args${ArgPos}
@@ -272,35 +259,36 @@ for line in `cat _predicate_table`; do
       echo "                        list.length(RL$ArgPos,LenRL$ArgPos),"
       echo "                        (if LenRL$ArgPos = 1 then"
       echo "                          RH$ArgPos = det_head(RL$ArgPos),"
-      echo "                          mrs_rel_handle(mrs_handle(VarNameX$ArgPos)) = RH$ArgPos,"
-      echo "                          varset.new_named_var(VarNameX$ArgPos,Var$ArgPos,$vvarIn,VarSetTmp$ArgPos)"
+      echo "                          mrs_rel_handle(mrs_handle(VarNameX$ArgPos)) = RH$ArgPos"
       echo "                        else"
       echo "                          RH$ArgPos = mrs_rel_handle(${VarNames[$ArgPos]}),"
-      echo "                          VarNameX$ArgPos = to_string(RH$ArgPos),"
-      echo "                          varset.new_named_var(VarNameX$ArgPos,Var$ArgPos,$vvarIn,VarSetTmp$ArgPos))"
+      echo "                          VarNameX$ArgPos = to_string(RH$ArgPos))"
       echo "                      else"
       echo "                        RH$ArgPos = mrs_rel_handle(${VarNames[$ArgPos]}),"
       echo "                        VarNameX$ArgPos = to_string(RH$ArgPos),"
-      echo "                        varset.new_named_var(VarNameX$ArgPos,Var$ArgPos,$vvarIn,VarSetTmp$ArgPos),"
       echo "                        RL$ArgPos = [${Vars[$ArgPos]}]),"
-      echo "                     list.foldl3(pred(RelHandleA::in,S0In::in,S0Out::out,C0In::in,C0Out::out,V0In::in,V0Out::out) is det :-"
-      echo "                       expandArg(RelHandle,RelMap,ArgMap,VarMap,ExcludeRelSet,wrap_rel_handle(RelHandleA),S0In,S0Out,C0In,C0Out,V0In,V0Out),"
-      echo "                       RL$ArgPos,$svarIn,$svarOut,[],Arg${ArgPos},VarSetTmp$ArgPos,$vvarOut)"
+      echo "                     varset.new_named_var(VarNameX$ArgPos,_,$vlvarIn,VarSetTmpLocal$ArgPos),"
+      echo "                     varset.new_named_var(VarNameX$ArgPos,Var$ArgPos,$vvarIn,VarSetTmp$ArgPos),"
+      echo "                     list.foldl4(pred(RelHandleA::in,S0In::in,S0Out::out,C0In::in,C0Out::out,VL0In::in,VL0Out::out,V0In::in,V0Out::out) is det :-"
+      echo "                       expandArg(RelHandle,RelMap,ArgMap,VarMap,ExcludeRelSet,wrap_rel_handle(RelHandleA),S0In,S0Out,C0In,C0Out,VL0In,VL0Out,V0In,V0Out),"
+      echo "                       RL$ArgPos,$svarIn,$svarOut,[],Arg${ArgPos},VarSetTmpLocal$ArgPos,VarSetTmp2Local$ArgPos,VarSetTmp$ArgPos,$vvarOut)"
       echo "                     ),"
     else
       echo "                    varset.new_named_var(${To_Strings[$ArgPos]}(${VarNames[$ArgPos]}),Var$ArgPos,$vvarIn,VarSetTmp$ArgPos),"
-      echo "                    expandArg(RelHandle,RelMap,ArgMap,VarMap,ExcludeRelSet,${WrapExprs[$ArgPos]},$svarIn,$svarOut,[],Arg$ArgPos,VarSetTmp$ArgPos,$vvarOut),"
+      echo "                    varset.new_named_var(${To_Strings[$ArgPos]}(${VarNames[$ArgPos]}),_,$vlvarIn,VarSetTmpLocal$ArgPos),"
+      echo "                    expandArg(RelHandle,RelMap,ArgMap,VarMap,ExcludeRelSet,${WrapExprs[$ArgPos]},$svarIn,$svarOut,[],Arg$ArgPos,VarSetTmpLocal$ArgPos,VarSetTmp2Local$ArgPos,VarSetTmp$ArgPos,$vvarOut),"
     fi
-    echo "                    list.append($avarIn,"
     echo "                     (if length(Arg$ArgPos) = 0 then"
     if test ${Types[$ArgPos]} = mrs_rel_handle; then 
-      echo "                                   [get_var_term(VarMap,$vvarOut,RH$ArgPos,Var$ArgPos,Context)]"
+      echo "                                   var_utils.get_var_term(VarMap,$vvarOut,RH$ArgPos,Var$ArgPos,Context,VarSetTmp2Local$ArgPos,$vlvarOut,Term$ArgPos),"
+      echo "                                   Terms$ArgPos = [Term$ArgPos]"
     else 
-      echo "                                   [term.variable(Var$ArgPos,Context)]"
+      echo "                                   Terms$ArgPos = [term.variable(Var$ArgPos,Context)],"
+      echo "                                   $vlvarOut = VarSetTmp2Local$ArgPos"
     fi
 cat << EOF
                                 else
-                                  [term.functor(atom("apply"),
+                                  Terms$ArgPos = [term.functor(atom("apply"),
                                     [term.functor(atom(":-"),
                                        [term.functor(atom("is"),
                                           [term.functor(atom("="),
@@ -312,13 +300,14 @@ cat << EOF
   				      list.foldl(func(Statement,Acc) = NewAcc :- NewAcc = term.functor(term.atom(","),[Acc,Statement],Context),
                                                  Arg$ArgPos,
   						 term.functor(term.atom("="),[term.variable(RetVar,Context),term.variable(Var$ArgPos,Context)],Context))
-				       ],Context)],Context)]),
-                                 $avarOut),
+				       ],Context)],Context)],
+				   $vlvarOut = VarSetTmp2Local$ArgPos),
+                        list.append($avarIn,Terms$ArgPos,$avarOut),
 EOF
   done
   echo "                    list.append(CallsIn0,[term.functor(term.atom(\"${pred}\"),$avarOut,Context)],CallsOut0)"
   echo "              ))),"
-  echo "              L,SignaturesIn,SignaturesOut,CallsIn,CallsOut,VarSetIn,VarSetOut)"
+  echo "              L,SignaturesIn,SignaturesOut,CallsIn,CallsOut,VarSetLocalIn,VarSetLocalOut,VarSetIn,VarSetOut)"
   lineDelim="else "
 done
 
