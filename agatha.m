@@ -214,8 +214,31 @@ mkCall(RelMap,RelHandle,Pred,PosIn,Context,
   term.var_list_to_term_list(VL, ArgTerms),
   Term = term.functor(atom(FuncName),ArgTerms,Context).
 
+:- pred quantifiers(mrs_rel_handle).
+:- mode quantifiers(out) is nondet.
+quantifiers(RelHandle) :- 
+  proper_q(RelHandle,Inst0,mrs_rstr_handle(RstrHandle0),mrs_body_handle(BodyHandle0))
+  ; udef_q(RelHandle,Inst0,mrs_rstr_handle(RstrHandle0),mrs_body_handle(BodyHandle0))
+  ; some_q(RelHandle,Inst0,mrs_rstr_handle(RstrHandle0),mrs_body_handle(BodyHandle0))
+  ; the_q(RelHandle,Inst0,mrs_rstr_handle(RstrHandle0),mrs_body_handle(BodyHandle0))
+  ; def_explicit_q(RelHandle,Inst0,mrs_rstr_handle(RstrHandle0),mrs_body_handle(BodyHandle0))
+  ; a_q(RelHandle,Inst0,mrs_rstr_handle(RstrHandle0),mrs_body_handle(BodyHandle0))
+  ; pronoun_q(RelHandle,Inst0,mrs_rstr_handle(RstrHandle0),mrs_body_handle(BodyHandle0))
+  ; no_q(RelHandle,Inst0,mrs_rstr_handle(RstrHandle0),mrs_body_handle(BodyHandle0))
+  ; every_q(RelHandle,Inst0,mrs_rstr_handle(RstrHandle0),mrs_body_handle(BodyHandle0)).
+
+:- pred misc(mrs_rel_handle).
+:- mode misc(out) is nondet.
+misc(RelHandle) :-
+  be_v_id(RelHandle, Event, Inst0, Inst1)
+  ; never_a_1(RelHandle, I, RelHandle0)
+  ; more_comp(RelHandle, E1, E2, Inst)
+  ; therefore_a_1(RelHandle, I, RelHandle0)
+  ; unknown(RelHandle, U, E)
+  ; kill_v_1(RelHandle, E, I1, I2).
+
 main(!IO) :-
-  SentencePos = 0,
+  SentencePos = 9,
   Sentence = det_index0(sentences.sentences,SentencePos),
   psoa_post(TopHandle,Event,RelMap) = Sentence,
   % map.foldl(pred(K::in, V::in, MapIn::in, MapOut::out) is det :- 
@@ -224,7 +247,16 @@ main(!IO) :-
   createMaps(RelMap,ArgMap,ArgRefMap,ArgRevMap),
   rstr_keys(RelMap, ArgRefMap, SentencePos, RstrSet),
   body_keys(RelMap, ArgRefMap, SentencePos, BodySet),
-  ExcludeSet = set.union(RstrSet,BodySet),
+
+  solutions(quantifiers, QRHL),
+  QSet = set.from_list(QRHL),
+
+  solutions(misc, MRHL),
+  MSet = set.from_list(MRHL),
+
+  ExcludeSet0 = set.union(RstrSet,BodySet),
+  ExcludeSet1 = set.union(ExcludeSet0, MSet),
+  ExcludeSet = set.union(ExcludeSet1,QSet),
   TopExcludeSet = set.union(ExcludeSet,TopSetSingleton),
   RelVals = list.map(func({RelHandle0,_,_,_}) = Ret :- Ret = RelHandle0, multi_map.values(RelMap)),
   RelSet = set.from_list(RelVals),
