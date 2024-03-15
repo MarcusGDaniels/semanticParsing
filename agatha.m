@@ -238,7 +238,7 @@ misc(RelHandle) :-
   ; kill_v_1(RelHandle, E, I1, I2).
 
 main(!IO) :-
-  SentencePos = 9,
+  SentencePos = 0,
   Sentence = det_index0(sentences.sentences,SentencePos),
   psoa_post(TopHandle,Event,RelMap) = Sentence,
   % map.foldl(pred(K::in, V::in, MapIn::in, MapOut::out) is det :- 
@@ -283,7 +283,6 @@ main(!IO) :-
       VarSetArgs0 = varset.init,
       ValuesSet = set.from_list(V),
       ValuesList = set.to_sorted_list(ValuesSet),
-
       list.length(ValuesList,Len),
       (if Len > 1 then
         (list.foldl4(pred({RelHandle1,_,_,Pred1}::in,
@@ -301,8 +300,7 @@ main(!IO) :-
 		     VarSetTmp,VarSetOut),
          Term = expandList(reverse(TermsOut),Context),
 	 (if det_head(V) = {K,_,_,_} then
-           IoOut = IoIn,
-	   VarMapOut = VarMapIn
+           IoOut = IoIn
          else
 	   Io0 = IoIn,
 	   varset.vars(VarSetArgs1,Vars),
@@ -312,23 +310,17 @@ main(!IO) :-
 	   %Io0 = IoIn,
 	   %pretty_printer.write_doc(pretty_printer.format(Term),Io0,Io1),
 	   io.print(".",Io1,Io2),
-	   io.nl(Io2,IoOut),
-	   VarMapOut = map.det_insert(VarMapIn,K,var_utils.collectInstanceVarNames(VarSetArgs1))
+	   io.nl(Io2,IoOut)
 	 ),
+	 VarMapOut = map.det_insert(VarMapIn,K,var_utils.collectInstanceVarNames(VarSetArgs1)),
 	 SignaturesOut = SignaturesIn)
        else 
 	({RelHandleTarget,_,_,PredTarget} = det_head(ValuesList),
-	 (if pred_named(_) = PredTarget then
-           write_rel(RelMap,ArgMap,map.init,RelSet,Context,RelHandleTarget,SignaturesIn,SignaturesOut,varset.init,VarSetLocalOut,VarSetIn,VarSetOut,IoIn,IoOut),
-	   (if map.contains(VarMapIn,RelHandleTarget) then
-	     VarMapOut = VarMapIn
-	   else
-	     VarMapOut = map.det_insert(VarMapIn,RelHandleTarget,var_utils.collectInstanceVarNames(VarSetLocalOut)))
-         else
- 	  SignaturesOut = SignaturesIn,
-	  VarMapOut = VarMapIn,
-	  VarSetOut = VarSetIn,
-	  IoOut = IoIn)))),
+         write_rel(RelMap,ArgMap,map.init,RelSet,Context,RelHandleTarget,SignaturesIn,SignaturesOut,varset.init,VarSetLocalOut,VarSetIn,VarSetOut,IoIn,IoOut),
+	 (if map.contains(VarMapIn,RelHandleTarget) then
+	   VarMapOut = VarMapIn
+	 else
+	   VarMapOut = map.det_insert(VarMapIn,RelHandleTarget,var_utils.collectInstanceVarNames(VarSetLocalOut)))))),
      RelMap,set.init,Signatures0,map.init,VarMap,VarSetIn,VarSet0,!IO),
 
   list.foldl3(pred(RelHandle::in,
@@ -340,6 +332,31 @@ main(!IO) :-
     Signatures0,Signatures1,
     VarSet0,VarSet1,
     !IO),
-  write_rel(RelMap,ArgMap,VarMap,ExcludeSet,Context,RelHandleTop,Signatures1,Signatures2,varset.init,VarSetLocal1,VarSet1,VarSet2,!IO).
+  write_rel(RelMap,ArgMap,VarMap,ExcludeSet,Context,RelHandleTop,Signatures1,Signatures2,varset.init,VarSetLocal1,VarSet1,VarSet2,!IO),
+
+  map.foldl(pred(K::in,V::in,TermsIn::in,TermsOut::out) is det :- 
+     (ValuesSet = set.from_list(V),
+      ValuesList = set.to_sorted_list(ValuesSet),
+      list.length(ValuesList,Len),
+      {RelTarget,_,_,_} = det_head(V),
+      (if K = RelTarget, Len > 1 then
+         TermsOut = TermsIn
+       else
+	 if map.contains(VarMap,K) then
+           map.lookup(VarMap,K,VarNames),
+           mrs_rel_handle(mrs_handle(Name)) = K,
+           var_list_to_term_list(var_utils.collectGlobalVars(VarSet2,VarNames),Terms),
+           Term = term.functor(term.atom(Name),Terms,Context),
+           (if set.contains(TermsIn,Term) then
+             TermsOut = TermsIn
+            else
+             TermsOut = set.insert(TermsIn,Term))
+	 else
+           TermsOut = TermsIn)),
+     RelMap,set.init,TermsAll),
+  var_list_to_term_list(var_utils.collectGlobalVars(VarSet2,var_utils.collectInstanceVarNames(VarSet2)),VarTerms2),
+  term_io.write_term(VarSet0,term.functor(atom(":-"),[term.functor(term.atom("combined"),VarTerms2,Context),expandList(set.to_sorted_list(TermsAll),Context)],Context),!IO),
+  io.print(".",!IO),
+  io.nl(!IO).
 
 
