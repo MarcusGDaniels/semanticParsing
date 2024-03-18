@@ -256,7 +256,8 @@ main(!IO) :-
 
   ExcludeSet0 = set.union(RstrSet,BodySet),
   ExcludeSet1 = set.union(ExcludeSet0, MSet),
-  ExcludeSet = set.union(ExcludeSet1,QSet),
+  ExcludeSet2 = set.union(ExcludeSet1,QSet),
+  ExcludeSet = ExcludeSet2,
   TopExcludeSet = set.union(ExcludeSet,TopSetSingleton),
   RelVals = list.map(func({RelHandle0,_,_,_}) = Ret :- Ret = RelHandle0, multi_map.values(RelMap)),
   RelSet = set.from_list(RelVals),
@@ -316,43 +317,55 @@ main(!IO) :-
 	 SignaturesOut = SignaturesIn)
        else 
 	({RelHandleTarget,_,_,PredTarget} = det_head(ValuesList),
-         write_rel(RelMap,ArgMap,map.init,RelSet,Context,RelHandleTarget,SignaturesIn,SignaturesOut,varset.init,VarSetLocalOut,VarSetIn,VarSetOut,IoIn,IoOut),
-	 (if map.contains(VarMapIn,RelHandleTarget) then
-	   VarMapOut = VarMapIn
-	 else
-	   VarMapOut = map.det_insert(VarMapIn,RelHandleTarget,var_utils.collectInstanceVarNames(VarSetLocalOut)))))),
+	 (if pred_named(_) = PredTarget then
+          write_rel(RelMap,ArgMap,map.init,RelSet,Context,RelHandleTarget,SignaturesIn,SignaturesOut,varset.init,VarSetLocalOut,VarSetIn,VarSetOut,IoIn,IoOut),
+          (if map.contains(VarMapIn,RelHandleTarget) then
+            VarMapOut = VarMapIn
+	   else
+            VarMapOut = map.det_insert(VarMapIn,RelHandleTarget,var_utils.collectInstanceVarNames(VarSetLocalOut)))
+         else
+  	  SignaturesOut = SignaturesIn,
+ 	  VarMapOut = VarMapIn,
+ 	  VarSetOut = VarSetIn,
+ 	  IoOut = IoIn)))),
      RelMap,set.init,Signatures0,map.init,VarMap,VarSetIn,VarSet0,!IO),
 
-  list.foldl3(pred(RelHandle::in,
+  list.foldl4(pred(RelHandle::in,
                    SignaturesIn0::in,SignaturesOut0::out,
 		   VarSetIn0::in,VarSetOut0::out,
+                   VarMapIn0::in,VarMapOut0::out,
 		   IoIn0::di,IoOut0::uo) is det :-
-      write_rel(RelMap,ArgMap,VarMap,TopExcludeSet,Context,RelHandle,SignaturesIn0,SignaturesOut0,varset.init,VarSetLocalOut0,VarSetIn0,VarSetOut0,IoIn0,IoOut0),
+      (write_rel(RelMap,ArgMap,VarMapIn0,TopExcludeSet,Context,RelHandle,SignaturesIn0,SignaturesOut0,varset.init,VarSetLocalOut0,VarSetIn0,VarSetOut0,IoIn0,IoOut0),
+       (if not map.contains(VarMapIn0,RelHandle) then
+          VarMapOut0 = map.det_insert(VarMapIn0,RelHandle,var_utils.collectInstanceVarNames(VarSetLocalOut0))
+        else
+          VarMapOut0 = VarMapIn0)),
     set.to_sorted_list(ExcludeSet),
     Signatures0,Signatures1,
     VarSet0,VarSet1,
+    VarMap,VarMapAll,
     !IO),
-  write_rel(RelMap,ArgMap,VarMap,ExcludeSet,Context,RelHandleTop,Signatures1,Signatures2,varset.init,VarSetLocal1,VarSet1,VarSet2,!IO),
+  write_rel(RelMap,ArgMap,VarMapAll,ExcludeSet,Context,RelHandleTop,Signatures1,Signatures2,varset.init,VarSetLocal1,VarSet1,VarSet2,!IO),
 
   map.foldl(pred(K::in,V::in,TermsIn::in,TermsOut::out) is det :- 
      (ValuesSet = set.from_list(V),
       ValuesList = set.to_sorted_list(ValuesSet),
       list.length(ValuesList,Len),
-      {RelTarget,_,_,_} = det_head(V),
-      (if K = RelTarget, Len > 1 then
+      (if Len > 1 then
          TermsOut = TermsIn
        else
-	 if map.contains(VarMap,K) then
-           map.lookup(VarMap,K,VarNames),
-           mrs_rel_handle(mrs_handle(Name)) = K,
-           var_list_to_term_list(var_utils.collectGlobalVars(VarSet2,VarNames),Terms),
-           Term = term.functor(term.atom(Name),Terms,Context),
-           (if set.contains(TermsIn,Term) then
-             TermsOut = TermsIn
-            else
-             TermsOut = set.insert(TermsIn,Term))
-	 else
-           TermsOut = TermsIn)),
+         % {RelTarget,_,_,_} = det_head(V),
+         (if map.contains(VarMapAll,K), not map.contains(VarMap,K) then
+            map.lookup(VarMapAll,K,VarNames),
+            mrs_rel_handle(mrs_handle(Name)) = K,
+            var_list_to_term_list(var_utils.collectGlobalVars(VarSet2,VarNames),Terms),
+            Term = term.functor(term.atom(Name),Terms,Context),
+            (if set.contains(TermsIn,Term) then
+              TermsOut = TermsIn
+             else
+              TermsOut = set.insert(TermsIn,Term))
+	   else
+             TermsOut = TermsIn))),
      RelMap,set.init,TermsAll),
   var_list_to_term_list(var_utils.collectGlobalVars(VarSet2,var_utils.collectInstanceVarNames(VarSet2)),VarTerms2),
   term_io.write_term(VarSet0,term.functor(atom(":-"),[term.functor(term.atom("combined"),VarTerms2,Context),expandList(set.to_sorted_list(TermsAll),Context)],Context),!IO),
