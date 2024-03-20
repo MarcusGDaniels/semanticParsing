@@ -238,7 +238,7 @@ misc(RelHandle) :-
   ; kill_v_1(RelHandle, E, I1, I2).
 
 main(!IO) :-
-  SentencePos = 0,
+  SentencePos = 1,
   Sentence = det_index0(sentences.sentences,SentencePos),
   psoa_post(TopHandle,Event,RelMap) = Sentence,
   % map.foldl(pred(K::in, V::in, MapIn::in, MapOut::out) is det :- 
@@ -358,17 +358,18 @@ main(!IO) :-
          (if map.contains(VarMapAll,K), not map.contains(VarMap,K) then
             map.lookup(VarMapAll,K,VarNames),
             mrs_rel_handle(mrs_handle(Name)) = K,
-            var_list_to_term_list(var_utils.collectGlobalVars(VarSet2,VarNames),Terms),
+	    GVars = var_utils.collectGlobalVars(VarSet2,VarNames),
+            var_list_to_term_list(GVars,Terms),
             Term = term.functor(term.atom(Name),Terms,Context),
             (if set.contains(TermsIn,Term) then
               TermsOut = TermsIn
              else
               TermsOut = set.insert(TermsIn,Term))
-	   else
-             TermsOut = TermsIn))),
+	  else
+            TermsOut = TermsIn))),
      RelMap,set.init,TermsAll),
   var_list_to_term_list(var_utils.collectGlobalVars(VarSet2,var_utils.collectInstanceVarNames(VarSet2)),VarTerms2),
-  term_io.write_term(VarSet0,term.functor(atom(":-"),[term.functor(term.atom("combined"),VarTerms2,Context),expandList(set.to_sorted_list(TermsAll),Context)],Context),!IO),
+  term_io.write_term(VarSet2,term.functor(atom(":-"),[term.functor(term.atom("combined"),VarTerms2,Context),expandList(set.to_sorted_list(TermsAll),Context)],Context),!IO),
   io.print(".",!IO),
   io.nl(!IO).
 
