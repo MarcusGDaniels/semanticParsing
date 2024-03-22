@@ -238,7 +238,7 @@ misc(RelHandle) :-
   ; kill_v_1(RelHandle, E, I1, I2).
 
 main(!IO) :-
-  SentencePos = 1,
+  SentencePos = 9,
   Sentence = det_index0(sentences.sentences,SentencePos),
   psoa_post(TopHandle,Event,RelMap) = Sentence,
   % map.foldl(pred(K::in, V::in, MapIn::in, MapOut::out) is det :- 
