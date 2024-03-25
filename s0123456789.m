@@ -512,7 +512,7 @@ h47s1(X46s1,I52s1) :- the_q(X46s1,
                        (func) = Ret :- Ret = solutions(pred(Val::out) is nondet :- h48s1(Val,I52s1)),
                        (func) = Ret :- Ret = (if h49s1 then yes else no)).
 h4s1(X14s1, X3s1, X8s1) :- udef_q(X3s1,
-                       (func) = Ret :- Ret = (if h17s1(X14s1,X3s1,X8s1) then [X3s1] else []),
+                       (func) = Ret :- Ret = solutions(pred(Val::out) is nondet :- h17s1(X14s1,Val,X8s1)),
                        (func) = Ret :- Ret = (if h6s1 then yes else no)).
 h50s1_0(X46s1) :- live_v_1(e53s1, X46s1).
 h50s1_1(X46s1) :- only_a_1(e51s1, X46s1).
