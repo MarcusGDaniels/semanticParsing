@@ -13,54 +13,6 @@
 
 :- pred main(io::di, io::uo) is det.
 
-:- pred h20s0(mrs_instance). % Dreadbury
-:- mode h20s0(out) is det.
-:- pred h14s0_1(mrs_instance). % Mansion
-:- mode h14s0_1(out) is det.
-:- pred h33s0(mrs_instance). % Aunt
-:- mode h33s0(out) is det.
-:- pred h27s0_1(mrs_instance). % Agatha
-:- mode h27s0_1(out) is det.
-
-:- pred h17s0(mrs_instance). % proper Dreadbury
-:- mode h17s0(out) is nondet. 
-:- pred h30s0(mrs_instance).
-:- mode h30s0(out) is nondet. % proper Agatha
-
-:- pred h25s0(mrs_instance, mrs_instance). % Agatha predicates
-:- mode h25s0(out,in) is nondet.
-:- pred h12s0(mrs_instance, mrs_instance). % Dreadbury predicates
-:- mode h12s0(out,in) is nondet.
-:- pred h6s0(mrs_instance, mrs_instance). % in_p_loc, live_v_1, person
-:- mode h6s0(in,out) is nondet.
-:- pred h11s0(mrs_instance, mrs_instance). % proper Dreadbury Mansion
-:- mode h11s0(out,in) is nondet.
-:- pred h24s0(mrs_instance, mrs_instance). % proper Aunt Agatha
-:- mode h24s0(out,in) is nondet.
-
-:- pred h14s0_0(mrs_instance, mrs_instance). % Dreadbury Mansion compound
-:- mode h14s0_0(in,in) is det. 
-
-:- pred h27s0_0(mrs_instance, mrs_instance). % Aunt Agatha compound
-:- mode h27s0_0(in,in) is det.
-
-:- pred h4s0_0(mrs_instance). % in_p_loc
-:- mode h4s0_0(in) is det.
-:- pred h4s0_1(mrs_instance). % live_v_1
-:- mode h4s0_1(in) is det.
-
-:- pred h4s0_2(mrs_instance). % person
-:- mode h4s0_2(out) is nondet.
-
-:- pred h5s0(mrs_instance, mrs_instance). % find persons in Mansion
-:- mode h5s0(in,out) is nondet.
-
-:- pred h1s0(mrs_instance, mrs_instance). % kill_v_1
-:- mode h1s0(in,in) is semidet.
-
-:- pred named(mrs_instance, mrs_carg).
-:- mode named(out, in) is det.
-
 :- pred proper_q(mrs_instance, (func) = list(mrs_instance), (func) = bool).
 :- mode proper_q(out, in, in) is nondet.
 :- pred some_q(mrs_instance, (func) = list(mrs_instance), (func) = bool).
@@ -79,6 +31,9 @@
 :- mode no_q(out, in, in) is nondet.
 :- pred every_q(mrs_instance, (func) = list(mrs_instance), (func) = bool).
 :- mode every_q(out, in, in) is nondet.
+
+:- pred named(mrs_instance, mrs_carg).
+:- mode named(out, in) is det.
 
 :- pred therefore_a_1(mrs_instance, (func) = bool).
 :- mode therefore_a_1(in, in) is semidet.
@@ -170,31 +125,6 @@
 :- pred unknown(mrs_unknown, mrs_event).
 :- mode unknown(in, in) is det.
 
-% 
-:- pred h13s0.
-:- mode h13s0 is det.
-
-:- pred h19s0.
-:- mode h19s0 is det.
-
-:- pred h26s0.
-:- mode h26s0 is det.
-
-:- pred h32s0.
-:- mode h32s0 is det.
-
-:- pred h7s0.
-:- mode h7s0 is det.
-
-:- func e15s0 = mrs_event.
-:- func e2s0 = mrs_event.
-:- func e28s0 = mrs_event.
-:- func e8s0 = mrs_event.
-:- func e9s0 = mrs_event.
-
-:- pred combined0(mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance).
-:- mode combined0(out,out,out,out,out) is nondet.
-
 :- pred coref(mrs_instance, mrs_instance).
 :- mode coref(in,in) is semidet.
 
@@ -285,6 +215,75 @@ coref(A,B) :- A = B.
 
 % -- Sentence 0
 % "Someone who lives in Dreadbury Mansion killed Aunt Agatha." 0
+
+:- pred h20s0(mrs_instance). % Dreadbury
+:- mode h20s0(out) is det.
+:- pred h14s0_1(mrs_instance). % Mansion
+:- mode h14s0_1(out) is det.
+:- pred h33s0(mrs_instance). % Aunt
+:- mode h33s0(out) is det.
+:- pred h27s0_1(mrs_instance). % Agatha
+:- mode h27s0_1(out) is det.
+
+:- pred h17s0(mrs_instance). % proper Dreadbury
+:- mode h17s0(out) is nondet. 
+:- pred h30s0(mrs_instance).
+:- mode h30s0(out) is nondet. % proper Agatha
+
+:- pred h25s0(mrs_instance, mrs_instance). % Agatha predicates
+:- mode h25s0(out,in) is nondet.
+:- pred h12s0(mrs_instance, mrs_instance). % Dreadbury predicates
+:- mode h12s0(out,in) is nondet.
+:- pred h6s0(mrs_instance, mrs_instance). % in_p_loc, live_v_1, person
+:- mode h6s0(in,out) is nondet.
+:- pred h11s0(mrs_instance, mrs_instance). % proper Dreadbury Mansion
+:- mode h11s0(out,in) is nondet.
+:- pred h24s0(mrs_instance, mrs_instance). % proper Aunt Agatha
+:- mode h24s0(out,in) is nondet.
+
+:- pred h14s0_0(mrs_instance, mrs_instance). % Dreadbury Mansion compound
+:- mode h14s0_0(in,in) is det. 
+
+:- pred h27s0_0(mrs_instance, mrs_instance). % Aunt Agatha compound
+:- mode h27s0_0(in,in) is det.
+
+:- pred h4s0_0(mrs_instance). % in_p_loc
+:- mode h4s0_0(in) is det.
+:- pred h4s0_1(mrs_instance). % live_v_1
+:- mode h4s0_1(in) is det.
+
+:- pred h4s0_2(mrs_instance). % person
+:- mode h4s0_2(out) is nondet.
+
+:- pred h5s0(mrs_instance, mrs_instance). % find persons in Mansion
+:- mode h5s0(in,out) is nondet.
+
+:- pred h1s0(mrs_instance, mrs_instance). % kill_v_1
+:- mode h1s0(in,in) is semidet.
+
+:- pred h13s0.
+:- mode h13s0 is det.
+
+:- pred h19s0.
+:- mode h19s0 is det.
+
+:- pred h26s0.
+:- mode h26s0 is det.
+
+:- pred h32s0.
+:- mode h32s0 is det.
+
+:- pred h7s0.
+:- mode h7s0 is det.
+
+:- func e15s0 = mrs_event.
+:- func e2s0 = mrs_event.
+:- func e28s0 = mrs_event.
+:- func e8s0 = mrs_event.
+:- func e9s0 = mrs_event.
+
+:- pred combined0(mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance).
+:- mode combined0(out,out,out,out,out) is nondet.
 
 e15s0 = mrs_event(0,15).
 e2s0 = mrs_event(0,2).
