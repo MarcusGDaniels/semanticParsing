@@ -15,22 +15,31 @@
 
 :- pred proper_q(mrs_instance, (func) = list(mrs_instance), (func) = bool).
 :- mode proper_q(out, in, in) is nondet.
+
 :- pred some_q(mrs_instance, (func) = list(mrs_instance), (func) = bool).
 :- mode some_q(out, in, in) is nondet.
+
 :- pred udef_q(mrs_instance, (func) = list(mrs_instance), (func) = bool).
 :- mode udef_q(out, in, in) is nondet.
+
 :- pred the_q(mrs_instance, (func) = list(mrs_instance), (func) = bool).
 :- mode the_q(out, in, in) is nondet.
+
 :- pred def_explicit_q(mrs_instance, (func) = list(mrs_instance), (func) = bool).
 :- mode def_explicit_q(out, in, in) is nondet.
+
 :- pred pronoun_q(mrs_instance, (func) = list(mrs_instance), (func) = bool).
 :- mode pronoun_q(out, in, in) is nondet.
+
 :- pred a_q(mrs_instance, (func) = list(mrs_instance), (func) = bool).
 :- mode a_q(out, in, in) is nondet.
+
 :- pred no_q(mrs_instance, (func) = list(mrs_instance), (func) = bool).
 :- mode no_q(out, in, in) is nondet.
+
 :- pred every_q(mrs_instance, (func) = list(mrs_instance), (func) = bool).
 :- mode every_q(out, in, in) is nondet.
+
 
 :- pred named(mrs_instance, mrs_carg).
 :- mode named(out, in) is det.
