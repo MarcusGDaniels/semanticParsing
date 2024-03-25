@@ -81,7 +81,7 @@
 :- mode and_c_x(out,in,in) is nondet.
 
 :- pred butler_n_1(mrs_instance).
-:- mode butler_n_1(out) is det.
+:- mode butler_n_1(out) is nondet.
 
 :- pred killer_n_1(mrs_instance).
 :- mode killer_n_1(out) is nondet.
@@ -144,6 +144,18 @@
 % ERG predicate definitions
 named(Inst, Carg) :- Inst = mrs_instance(Carg).
 
+:- pred namedPeople(mrs_instance).
+:- mode namedPeople(out) is nondet.
+namedPeople(Person) :- Person = mrs_instance(mrs_carg("Agatha")); Person = mrs_instance(mrs_carg("Charles")).
+
+butler_n_1(Person) :- Person = mrs_instance(mrs_carg("The Butler")) ; namedPeople(Person).
+
+killer_n_1(Person) :- Person = mrs_instance(mrs_carg("The Killer")) ; namedPeople(Person).
+
+person(Person) :- butler_n_1(Person); namedPeople(Person).
+
+generic_entity(I) :- I = mrs_instance(mrs_carg("generic")).
+
 the_q(Inst, FuncR, FuncB) :- list.member(Inst,apply(FuncR)).
 proper_q(Inst, FuncR, FuncB) :- list.member(Inst,apply(FuncR)).
 udef_q(Inst, FuncR, FuncB) :- list.member(Inst,apply(FuncR)).
@@ -164,18 +176,12 @@ only_a_1(E, Inst0) :- true.
 
 be_v_id(E, Inst0, Inst1) :- true.
 
-kill_v_1(E, Inst0, Inst1) :- true.
+kill_v_1(E, Inst0, Inst1) :- person(Inst0), person(Inst1), killer_n_1(Inst0).
 
 implicit_conj(I0,I1,I2) :- 
   mrs_instance(mrs_carg(Name1)) = I1,
   mrs_instance(mrs_carg(Name2)) = I2,
   I0 = mrs_instance(mrs_carg("implicit_conj_" ++ Name1 ++ "_" ++ Name2)).
-
-butler_n_1(Inst) :- Inst = mrs_instance(mrs_carg("TheButler")).
-
-killer_n_1(Inst) :- Inst = mrs_instance(mrs_carg("killer0")).
-
-person(mrs_instance(mrs_carg("Agatha"))).
 
 and_c_e(E0, E1, E2) :- true.
 
@@ -184,19 +190,17 @@ and_c_x(I0, I1, I2) :-
   mrs_instance(mrs_carg(Name2)) = I2,
   I0 = mrs_instance(mrs_carg("and_c_x_" ++ Name1 ++ "_" ++ Name2)).
 
-people_n_of(Inst0, Inst1) :- person(Inst0).
-
 therein_p_dir(E0, E1) :- true.
 
 poss(E, I0, I1) :- true.
-
-victim_n_of(Inst0, Inst1) :- Inst0 = mrs_instance(mrs_carg("victim")).
 
 always_a_1(Inst0, Event) :- true.
 
 hate_v_1(E, I0, I1) :- true.
 
-never_a_1(I23s2, Func) :- apply(Func) = yes.
+never_a_1(I23s2, Func) :- apply(Func) = no.
+
+neg(E, Func) :- apply(Func) = no.
 
 pron(X16s2) :- X16s2 = mrs_instance(mrs_carg("pron0")).
 
@@ -206,13 +210,16 @@ rich_a_in(E0, I0, I1) :- true.
 
 card(E, I, C) :- true.
 
-generic_entity(I) :- I = mrs_instance(mrs_carg("generic")).
+aunt_n_of(I0,I1) :- 
+  person(I0).
 
-aunt_n_of(I0,I1) :- I0 = mrs_instance(mrs_carg("aunt_of")).
+victim_n_of(I0, I1) :- 
+  person(I0).
+
+people_n_of(I0, I1) :-
+  person(I0).
 
 except_p(E0, I0, I1) :- true.
-
-neg(E, Func) :- apply(Func) = yes.
 
 unknown(U, E) :- true.
 
@@ -340,7 +347,6 @@ combined0(X10s0, X16s0, X23s0, X29s0, X3s0) :- h1s0(X23s0, X3s0), h11s0(X10s0, X
 
 % --- Sentence 1
 % "Agatha, the butler, and Charles live in Dreadbury Mansion, and are the only people who live therein." 1
-% X8s1,    X19s1,          X24s1
 
 :- pred h0s1(mrs_instance,mrs_instance,mrs_instance).
 :- mode h0s1(in,in,in).
@@ -382,7 +388,7 @@ combined0(X10s0, X16s0, X23s0, X29s0, X3s0) :- h1s0(X23s0, X3s0), h11s0(X10s0, X
 :- mode h1s1_3(in) is det.
 
 :- pred h22s1(mrs_instance).
-:- mode h22s1(out) is det.
+:- mode h22s1(out) is nondet.
 
 :- pred h23s1(mrs_instance, mrs_instance, mrs_instance).
 :- mode h23s1(out, in, in) is nondet.
@@ -542,6 +548,7 @@ combined1(X14s1, X19s1, X24s1, X32s1, X38s1, X3s1, X46s1, X8s1, I52s1) :-
    h47s1(X46s1,I52s1),
    h4s1(X14s1, X3s1, X8s1).
 
+% --- Sentence 2
 % "A killer always hates his victim, and is never richer than his victim." 
 :- pred h0s2(mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance).
 :- mode h0s2(in,in,in,in,in,in) is semidet.
@@ -698,6 +705,7 @@ h31s2 :- true.
 h37s2 :- true.
 h6s2 :- true.
 
+% Sentence 3
 % "Charles hates no one that Aunt Agatha hates."
 
 :- pred h11s3(mrs_instance, mrs_instance).
@@ -806,6 +814,7 @@ h12s3 :- true.
 h19s3 :- true.
 h25s3 :- true.
 
+% Sentence 4
 % "Agatha hates everyone except the butler."
 
 :- pred h12s4(mrs_instance, mrs_instance).
@@ -827,7 +836,7 @@ h25s3 :- true.
 :- mode h16s4(out) is nondet.
 
 :- pred h19s4(mrs_instance).
-:- mode h19s4(out) is det.
+:- mode h19s4(out) is nondet.
 
 :- pred h4s4(mrs_instance).
 :- mode h4s4(out) is nondet.
@@ -868,12 +877,13 @@ h4s4(X3s4) :- proper_q(X3s4,
                        (func) = Ret :- Ret = solutions(pred(Val::out) is nondet :- h7s4(Val)),
                        (func) = Ret :- Ret = (if h6s4 then yes else no)).
 h1s4(X3s4, X9s4) :- hate_v_1(e2s4, X3s4, X9s4).
-combined4(X15s4, X3s4, X9s4) :- h11s4(X15s4, X9s4), h16s4(X15s4), h19s4(X15s4), h4s4(X3s4). % , h1s4(X3s4, X9s4).
+combined4(X15s4, X3s4, X9s4) :- h11s4(X15s4, X9s4), h16s4(X15s4), h19s4(X15s4), h4s4(X3s4), h1s4(X3s4, X9s4).
 
 h6s4 :- true.
 h13s4 :- true.
 h18s4 :- true.
 
+% Sentence 5
 % "The butler hates everyone not richer than Aunt Agatha."
 :- pred h11s5(mrs_instance,mrs_instance,mrs_instance).
 :- mode h11s5(out,in,in) is nondet.
@@ -912,7 +922,7 @@ h18s4 :- true.
 :- mode h4s5(out) is nondet.
 
 :- pred h7s5(mrs_instance).
-:- mode h7s5(out) is det.
+:- mode h7s5(out) is nondet.
 
 :- pred h9s5_0(mrs_instance, mrs_instance, mrs_instance).
 :- mode h9s5_0(in, in, in) is semidet.
@@ -987,6 +997,7 @@ h12s5 :- true.
 h22s5 :- true.
 h28s5 :- true.
 
+% Sentence 6
 % "The butler hates everyone Aunt Agatha hates."
 
 :- pred h11s6(mrs_instance, mrs_instance).
@@ -1017,7 +1028,7 @@ h28s5 :- true.
 :- mode h4s6(out) is nondet.
 
 :- pred h7s6(mrs_instance).
-:- mode h7s6(out) is det.
+:- mode h7s6(out) is nondet.
 
 :- pred h9s6_0(mrs_instance, mrs_instance).
 :- mode h9s6_0(in, in) is semidet.
@@ -1084,6 +1095,7 @@ h12s6 :- true.
 h16s6 :- true.
 h22s6 :- true.
 
+% Sentence 7
 % "No one hates everyone."
 :- pred h10s7(mrs_instance).
 :- mode h10s7(out) is nondet.
@@ -1126,6 +1138,7 @@ combined7(X3s7, X8s7) :- h10s7(X8s7), h4s7(X3s7), h5s7(X3s7), h9s7(X8s7).
 h7s7 :- true.
 h12s7 :- true.
 
+% Sentence 8
 % "Agatha is not the butler."
 :- pred h7s8(mrs_instance).
 :- mode h7s8(out).
@@ -1175,6 +1188,7 @@ combined8(X10s8, X3s8) :- h13s8(X10s8), h16s8(X10s8), h4s8(X3s8), h1s8(X10s8, X3
 h15s8 :- true.
 h6s8 :- true.
 
+% Sentence 9
 % "Therefore : Agatha killed herself."
 :- pred h16s9(mrs_instance).
 :- mode h16s9(out) is det.
@@ -1250,7 +1264,6 @@ h15s9 :- true.
 h24s9 :- true.
 
 main(!IO) :- 
-% should return (Mansion, Dreadybury, Agatha, Aunt, Agatha)
   solutions(pred({X10s0,X16s0,X23s0,X29s0,X3s0}::out) is nondet :- combined0(X10s0,X16s0,X23s0,X29s0,X3s0),Ret0),
   io.print(Ret0,!IO),
   io.nl(!IO),
