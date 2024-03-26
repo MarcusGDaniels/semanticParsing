@@ -4,7 +4,6 @@
 :- import_module bool.
 :- import_module list.
 :- import_module io.
-:- import_module unsafe.
 
 :- type mrs_instance ---> mrs_instance(mrs_carg).
 :- type mrs_carg ---> mrs_carg(string).
@@ -140,6 +139,7 @@
 :- implementation.
 :- import_module solutions.
 :- import_module string.
+:- import_module unsafe.
 
 % ERG predicate definitions
 named(Inst, Carg) :- Inst = mrs_instance(Carg).
@@ -166,68 +166,175 @@ a_q(Inst, FuncR, FuncB) :- list.member(Inst,apply(FuncR)).
 no_q(Inst, FuncR, FuncB) :- list.member(Inst,apply(FuncR)).
 every_q(Inst, FuncR, FuncB) :- list.member(Inst,apply(FuncR)).
 
-in_p_loc(E0, E1, Inst) :- true.
+:- pragma promise_pure(in_p_loc/3).
+in_p_loc(E0, E1, Inst) :- 
+  %impure unsafe_perform_io(io.print({"in_p_loc",E0,E1,Inst})),
+  %impure unsafe_perform_io(io.nl),
+  true.
 
-compound(E, Inst0, Inst1) :- true.
+:- pragma promise_pure(compound/3).
+compound(E, Inst0, Inst1) :-
+  %impure unsafe_perform_io(io.print({"compound",E,Inst0,Inst1})),
+  %impure unsafe_perform_io(io.nl),
+  true.
 
-live_v_1(E, Inst0) :- true.
+:- pragma promise_pure(live_v_1/2).
+live_v_1(E, Inst0) :- 
+  %impure unsafe_perform_io(io.print({"live_v_1",E,Inst0})),
+  %impure unsafe_perform_io(io.nl),
+  true.
 
-only_a_1(E, Inst0) :- true.
+:- pragma promise_pure(only_a_1/2).
+only_a_1(E, Inst0) :-
+  %impure unsafe_perform_io(io.print({"only_a_1",E,Inst0})),
+  %impure unsafe_perform_io(io.nl),
+  true.
 
-be_v_id(E, Inst0, Inst1) :- true.
+:- pragma promise_pure(be_v_id/3).
+be_v_id(E, Inst0, Inst1) :- 
+  %impure unsafe_perform_io(io.print({"be_v_1",E,Inst0,Inst1})),
+  %impure unsafe_perform_io(io.nl),
+  true.
 
-kill_v_1(E, Inst0, Inst1) :- person(Inst0), person(Inst1), killer_n_1(Inst0).
+:- pragma promise_pure(kill_v_1/3).
+kill_v_1(E, Inst0, Inst1) :-
+  %impure unsafe_perform_io(io.print({"kill_v_1",E,Inst0,Inst1})),
+  %impure unsafe_perform_io(io.nl).
+  true.
 
+:- pragma promise_pure(implicit_conj/3).
 implicit_conj(I0,I1,I2) :- 
   mrs_instance(mrs_carg(Name1)) = I1,
   mrs_instance(mrs_carg(Name2)) = I2,
   I0 = mrs_instance(mrs_carg("implicit_conj_" ++ Name1 ++ "_" ++ Name2)).
 
-and_c_e(E0, E1, E2) :- true.
+:- pragma promise_pure(and_c_e/3).
+and_c_e(E0, E1, E2) :- 
+  %impure unsafe_perform_io(io.print({"and_c_e",E0,E1,E2})),
+  %impure unsafe_perform_io(io.nl),
+  true.
 
+:- pragma promise_pure(and_c_x/3).
 and_c_x(I0, I1, I2) :- 
   mrs_instance(mrs_carg(Name1)) = I1,
   mrs_instance(mrs_carg(Name2)) = I2,
   I0 = mrs_instance(mrs_carg("and_c_x_" ++ Name1 ++ "_" ++ Name2)).
+  %impure unsafe_perform_io(io.print({"and_c_x",I0,I1,I2})),
+  %impure unsafe_perform_io(io.nl).
 
-therein_p_dir(E0, E1) :- true.
+:- pragma promise_pure(therein_p_dir/2).
+therein_p_dir(E0, E1) :- 
+  %impure unsafe_perform_io(io.print({"therein_p_dir",E0,E1})),
+  %impure unsafe_perform_io(io.nl),
+  true.
 
-poss(E, I0, I1) :- true.
+:- pragma promise_pure(poss/3).
+poss(E, I0, I1) :-
+  %impure unsafe_perform_io(io.print({"poss",E,I0,I1})),
+  %impure unsafe_perform_io(io.nl),
+  true.
 
-always_a_1(Inst0, Event) :- true.
+:- pragma promise_pure(always_a_1/2).
+always_a_1(I, E) :- 
+  %impure unsafe_perform_io(io.print({"always_a_1",I,E})),
+  %impure unsafe_perform_io(io.nl).
+  true.
 
-hate_v_1(E, I0, I1) :- true.
+:- pragma promise_pure(hate_v_1/3).
+hate_v_1(E, I0, I1) :- 
+  %impure unsafe_perform_io(io.print({"hate_v_1",I0,I1})),
+  %impure unsafe_perform_io(io.nl)
+  true.
 
-never_a_1(I23s2, Func) :- apply(Func) = no.
+:- pragma promise_pure(never_a_1/2).
+never_a_1(I23s2, Func) :-
+  %impure unsafe_perform_io(io.print({"never_a_1",I23s2,Func})),
+  %impure unsafe_perform_io(io.nl),
+  apply(Func) = yes.
 
-neg(E, Func) :- apply(Func) = no.
+:- pragma promise_pure(neg/2).
+neg(E, Func) :-
+  %impure unsafe_perform_io(io.print({"neg",E,Func})),
+  %impure unsafe_perform_io(io.nl),
+  apply(Func) = yes.
 
-pron(X16s2) :- X16s2 = mrs_instance(mrs_carg("pron0")).
+:- pragma promise_pure(pron/1).
+pron(X16s2) :- 
+  X16s2 = mrs_instance(mrs_carg("pron0")).
+  %impure unsafe_perform_io(io.print({"pron",X16s2})),
+  %impure unsafe_perform_io(io.nl)
 
-more_comp(E0, E1, X0) :- true.
+:- pragma promise_pure(more_comp/3).
+more_comp(E0, E1, X0) :- 
+  %impure unsafe_perform_io(io.print({"more_comp",E0,E1,X0})),
+  %impure unsafe_perform_io(io.nl),
+  true.
 
-rich_a_in(E0, I0, I1) :- true.
+:- pragma promise_pure(rich_a_in/3).
+rich_a_in(E0, I0, I1) :-
+  %impure unsafe_perform_io(io.print({"rich_a_in",E0,I0,I1})),
+  %impure unsafe_perform_io(io.nl),
+  true.
 
-card(E, I, C) :- true.
+:- pragma promise_pure(card/3).
+card(E, I, C) :- 
+  %impure unsafe_perform_io(io.print({"card",E,I,C})),
+  %impure unsafe_perform_io(io.nl),
+  true.
 
+:- pragma promise_pure(aunt_n_of/2).
 aunt_n_of(I0,I1) :- 
+  %impure unsafe_perform_io(io.print({"Testing aunt_n_of",I1})),
+  %impure unsafe_perform_io(io.nl),
   person(I0).
+  %impure unsafe_perform_io(io.print({"OK: aunt_n_of",I0,I1})),
+  %impure unsafe_perform_io(io.nl).
 
+:- pragma promise_pure(victim_n_of/2).
 victim_n_of(I0, I1) :- 
+  %impure unsafe_perform_io(io.print({"Testing victim_n_of",I1})),
+  %impure unsafe_perform_io(io.nl),
   person(I0).
+  %impure unsafe_perform_io(io.print({"OK: victim_n_of",I0,I1})),
+  %impure unsafe_perform_io(io.nl).
 
+:- pragma promise_pure(people_n_of/2).
 people_n_of(I0, I1) :-
+  %impure unsafe_perform_io(io.print({"Invoking people_n_of",I1})),
+  %impure unsafe_perform_io(io.nl),
   person(I0).
+  %impure unsafe_perform_io(io.print({"people_n_of",I0,I1})),
+  %impure unsafe_perform_io(io.nl).
 
-except_p(E0, I0, I1) :- true.
+:- pragma promise_pure(except_p/3).
+except_p(E0, I0, I1) :-
+  %impure unsafe_perform_io(io.print({"except_p",E0,I0,I1})),
+  %impure unsafe_perform_io(io.nl),
+  true.
 
-unknown(U, E) :- true.
+:- pragma promise_pure(unknown/2).
+unknown(U, E) :- 
+  %impure unsafe_perform_io(io.print({"unknown",U,E})),
+  %impure unsafe_perform_io(io.nl),
+  true.
 
-therefore_a_1(I, Func) :- apply(Func) = yes.
+:- pragma promise_pure(therefore_a_1/2).
+therefore_a_1(I, Func) :-
+  %impure unsafe_perform_io(io.print({"therefore_a_1",I,Func})),
+  %impure unsafe_perform_io(io.nl),
+  apply(Func) = yes.
 
-colon_p_namely(E, FuncA, FuncB) :- apply(FuncA) = yes, apply(FuncB) = yes.
+:- pragma promise_pure(colon_p_namely/3).
+colon_p_namely(E, FuncA, FuncB) :-
+  %impure unsafe_perform_io(io.print({"colon_p_namely",E,FuncA,FuncB})),
+  %impure unsafe_perform_io(io.nl),
+  apply(FuncA) = yes, apply(FuncB) = yes.
 
-coref(A,B) :- A = B.
+:- pragma promise_pure(coref/2).
+coref(A,B) :- 
+  %impure unsafe_perform_io(io.print({"coref",A,B})),
+  %impure unsafe_perform_io(io.nl),
+  A = B.
 
 % -- Sentence 0
 % "Someone who lives in Dreadbury Mansion killed Aunt Agatha." 0
@@ -1263,68 +1370,154 @@ h15s9 :- true.
 
 h24s9 :- true.
 
+:- pred combined(mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance,
+                 mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance,
+                 mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance,
+                 mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance,
+                 mrs_instance, mrs_instance, mrs_instance,
+                 mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance,
+                 mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance,
+                 mrs_instance, mrs_instance,
+                 mrs_instance, mrs_instance,
+                 mrs_instance, mrs_instance
+		 ).
+:- mode combined(out, out, out, out, out, 
+                 out, out, out, out, out, out, out, out, out,
+                 out, out, out, out, out, out, out, out, out,
+                 out, out, out, out, out,
+                 out, out, out,
+                 out, out, out, out, out,
+                 out, out, out, out, out,
+                 out, out,
+                 out, out,
+                 out, out
+		 ).
+combined(X10s0,X16s0,X23s0,X29s0,X3s0, 
+         X14s1,X19s1,X24s1,X32s1,X38s1,X3s1,X46s1,X8s1,I52s1,
+         I8s2, I23s2, I26s2, I39s2, X10s2, X16s2, X28s2, X34s2, X3s2,
+         X17s3, X22s3, X3s3, X9s3, I27s3,
+         X15s4, X3s4, X9s4,
+         X19s5, X25s5, X3s5, X8s5, I17s5,
+         X14s6, X19s6, X3s6, X8s6, I24s6,
+         X3s7, X8s7,
+         X10s8, X3s8,
+         X13s9, X20s9
+	 ) :-
+   combined0(X10s0,X16s0,X23s0,X29s0,X3s0),
+   combined1(X14s1,X19s1,X24s1,X32s1,X38s1,X3s1,X46s1,X8s1,I52s1),
+   coref(X23s0,X8s1), % Agatha
+   coref(X16s0,X38s1), % Dreadbury
+   coref(X10s0,X32s1), % Mansion
+   combined2(I8s2, I23s2, I26s2, I39s2, X10s2, X16s2, X28s2, X34s2, X3s2),
+   combined3(X17s3, X22s3, X3s3, X9s3, I27s3),
+   coref(X23s0,X17s3), % Agatha
+   coref(X24s1,X3s3), % Charles
+   combined4(X15s4, X3s4, X9s4),
+   coref(X23s0,X3s4), % Agatha
+   coref(X19s1,X15s4), % butler
+   combined5(X19s5, X25s5, X3s5, X8s5, I17s5),
+   coref(X29s0,X25s5), % Aunt
+   coref(X23s0,X19s5), % Agatha
+   coref(X19s1,X3s5), % butler
+   combined6(X14s6, X19s6, X3s6, X8s6, I24s6),
+   coref(X23s0,X14s6), % Agatha
+   coref(X19s1,X3s6), % butler
+   combined7(X3s7, X8s7),
+   combined8(X10s8, X3s8),
+   coref(X23s0,X3s8), % Agatha
+   coref(X19s1,X10s8), % butler
+   combined9(X13s9,X20s9),
+   coref(X23s0,X13s9) % Agatha
+   .
+
 main(!IO) :- 
-  solutions(pred({X10s0,X16s0,X23s0,X29s0,X3s0}::out) is nondet :- combined0(X10s0,X16s0,X23s0,X29s0,X3s0),Ret0),
-  io.print(Ret0,!IO),
-  io.nl(!IO),
-  {X10s0,X16s0,X23s0,X29s0,X3s0} = det_head(Ret0),
-  solutions(pred({X14s1, X19s1, X24s1, X32s1, X38s1, X3s1, X46s1, X8s1, I52s1}::out) is nondet :-
-            (combined1(X14s1,X19s1,X24s1,X32s1,X38s1,X3s1,X46s1,X8s1,I52s1),
-             coref(X23s0,X8s1), % Agatha
-             coref(X16s0,X38s1), % Dreadbury
-             coref(X10s0,X32s1) % Mansion
-            ),Ret1),
-  io.print(Ret1,!IO),
-  io.nl(!IO),
-  {X14s1, X19s1, X24s1, X32s1, X38s1, X3s1, X46s1, X8s1, I52s1} = det_head(Ret1),
-  solutions(pred({I8s2, I23s2, I26s2, I39s2, X10s2, X16s2, X28s2, X34s2, X3s2}::out) is nondet :- combined2(I8s2, I23s2, I26s2, I39s2, X10s2, X16s2, X28s2, X34s2, X3s2),Ret2),
-  io.print(Ret2,!IO),
-  io.nl(!IO),
-  solutions(pred({X17s3, X22s3, X3s3, X9s3, I27s3}::out) is nondet :-
-            (combined3(X17s3, X22s3, X3s3, X9s3, I27s3),
-             coref(X23s0,X17s3), % Agatha
-             coref(X24s1,X3s3) % Charles
-            ), Ret3),
-  io.print(Ret3,!IO),
-  io.nl(!IO),
-  solutions(pred({X15s4, X3s4, X9s4}::out) is nondet :-
-            (combined4(X15s4, X3s4, X9s4),
-             coref(X23s0,X3s4), % Agatha
-             coref(X19s1,X15s4) % butler
-            ), Ret4),
-  io.print(Ret4,!IO),
-  io.nl(!IO),
-  solutions(pred({X19s5, X25s5, X3s5, X8s5, I17s5}::out) is nondet :-
-            (combined5(X19s5, X25s5, X3s5, X8s5, I17s5),
-             coref(X29s0,X25s5), % Aunt
-             coref(X23s0,X19s5), % Agatha
-             coref(X19s1,X3s5) % butler
-            ), Ret5),
-  io.print(Ret5,!IO),
-  io.nl(!IO),
-  solutions(pred({X14s6, X19s6, X3s6, X8s6, I24s6}::out) is nondet :-
-            (combined6(X14s6, X19s6, X3s6, X8s6, I24s6),
-             coref(X23s0,X14s6), % Agatha
-             coref(X19s1,X3s6) % butler
-            ), Ret6),
-  io.print(Ret6,!IO),
-  io.nl(!IO),
-  solutions(pred({X3s7, X8s7}::out) is nondet :-
-            (combined7(X3s7, X8s7)
-            ), Ret7),
-  io.print(Ret7,!IO),
-  io.nl(!IO),
-  solutions(pred({X10s8, X3s8}::out) is nondet :-
-            (combined8(X10s8, X3s8),
-             coref(X23s0,X3s8), % Agatha
-             coref(X19s1,X10s8) % butler
-            ), Ret8),
-  io.print(Ret8,!IO),
-  io.nl(!IO),
-  solutions(pred({X13s9,X20s9}::out) is nondet :-
-            (combined9(X13s9,X20s9),
-             coref(X23s0,X13s9) % Agatha
-            ), Ret9),
-  io.print(Ret9,!IO),
-  io.nl(!IO).
+   solutions(pred({X10s0,X16s0,X23s0,X29s0,X3s0,
+	           X14s1,X19s1,X24s1,X32s1,X38s1,X3s1,X46s1,X8s1,I52s1,
+                   I8s2, I23s2, I26s2, I39s2, X10s2, X16s2, X28s2, X34s2, X3s2,
+                   X17s3, X22s3, X3s3, X9s3, I27s3,
+                   X15s4, X3s4, X9s4,
+                   X19s5, X25s5, X3s5, X8s5, I17s5,
+                   X14s6, X19s6, X3s6, X8s6, I24s6,
+                   X3s7, X8s7,
+                   X10s8, X3s8,
+                   X13s9, X20s9
+		  }::out) is nondet :- 
+             combined(X10s0,X16s0,X23s0,X29s0,X3s0,
+                      X14s1,X19s1,X24s1,X32s1,X38s1,X3s1,X46s1,X8s1,I52s1,
+                      I8s2, I23s2, I26s2, I39s2, X10s2, X16s2, X28s2, X34s2, X3s2,
+                      X17s3, X22s3, X3s3, X9s3, I27s3,
+                      X15s4, X3s4, X9s4,
+                      X19s5, X25s5, X3s5, X8s5, I17s5,
+                      X14s6, X19s6, X3s6, X8s6, I24s6,
+                      X3s7, X8s7,
+                      X10s8, X3s8,
+                      X13s9, X20s9
+		     ), Ret),
+   length(Ret,Len),
+   io.print(Len,!IO),
+   io.nl(!IO).
+
+%  solutions(pred({X10s0,X16s0,X23s0,X29s0,X3s0}::out) is nondet :- combined0(X10s0,X16s0,X23s0,X29s0,X3s0),Ret0),
+%  io.print(Ret0,!IO),
+%  io.nl(!IO),
+%  {X10s0,X16s0,X23s0,X29s0,X3s0} = det_head(Ret0),
+%  solutions(pred({X14s1, X19s1, X24s1, X32s1, X38s1, X3s1, X46s1, X8s1, I52s1}::out) is nondet :-
+%            (combined1(X14s1,X19s1,X24s1,X32s1,X38s1,X3s1,X46s1,X8s1,I52s1),
+%             coref(X23s0,X8s1), % Agatha
+%             coref(X16s0,X38s1), % Dreadbury
+%             coref(X10s0,X32s1) % Mansion
+%            ),Ret1),
+%  io.print(Ret1,!IO),
+%  io.nl(!IO).
+%  {X14s1, X19s1, X24s1, X32s1, X38s1, X3s1, X46s1, X8s1, I52s1} = det_head(Ret1),
+%  solutions(pred({I8s2, I23s2, I26s2, I39s2, X10s2, X16s2, X28s2, X34s2, X3s2}::out) is nondet :- combined2(I8s2, I23s2, I26s2, I39s2, X10s2, X16s2, X28s2, X34s2, X3s2),Ret2),
+%  io.print(Ret2,!IO),
+%  io.nl(!IO),
+%  solutions(pred({X17s3, X22s3, X3s3, X9s3, I27s3}::out) is nondet :-
+%            (combined3(X17s3, X22s3, X3s3, X9s3, I27s3),
+%             coref(X23s0,X17s3), % Agatha
+%             coref(X24s1,X3s3) % Charles
+%            ), Ret3),
+%  io.print(Ret3,!IO),
+%  io.nl(!IO),
+%  solutions(pred({X15s4, X3s4, X9s4}::out) is nondet :-
+%            (combined4(X15s4, X3s4, X9s4),
+%             coref(X23s0,X3s4), % Agatha
+%             coref(X19s1,X15s4) % butler
+%            ), Ret4),
+%  io.print(Ret4,!IO),
+%  io.nl(!IO),
+%  solutions(pred({X19s5, X25s5, X3s5, X8s5, I17s5}::out) is nondet :-
+%            (combined5(X19s5, X25s5, X3s5, X8s5, I17s5),
+%             coref(X29s0,X25s5), % Aunt
+%             coref(X23s0,X19s5), % Agatha
+%             coref(X19s1,X3s5) % butler
+%            ), Ret5),
+%  io.print(Ret5,!IO),
+%  io.nl(!IO),
+%  solutions(pred({X14s6, X19s6, X3s6, X8s6, I24s6}::out) is nondet :-
+%            (combined6(X14s6, X19s6, X3s6, X8s6, I24s6),
+%             coref(X23s0,X14s6), % Agatha
+%             coref(X19s1,X3s6) % butler
+%            ), Ret6),
+%  io.print(Ret6,!IO),
+%  io.nl(!IO),
+%  solutions(pred({X3s7, X8s7}::out) is nondet :-
+%            (combined7(X3s7, X8s7)
+%            ), Ret7),
+%  io.print(Ret7,!IO),
+%  io.nl(!IO),
+%  solutions(pred({X10s8, X3s8}::out) is nondet :-
+%            (combined8(X10s8, X3s8),
+%             coref(X23s0,X3s8), % Agatha
+%             coref(X19s1,X10s8) % butler
+%            ), Ret8),
+%  io.print(Ret8,!IO),
+%  io.nl(!IO),
+%  solutions(pred({X13s9,X20s9}::out) is nondet :-
+%            (combined9(X13s9,X20s9),
+%             coref(X23s0,X13s9) % Agatha
+%            ), Ret9),
+%  io.print(Ret9,!IO),
+%  io.nl(!IO).
 
