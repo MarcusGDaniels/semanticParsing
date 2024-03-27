@@ -108,13 +108,13 @@
 :- mode never_a_1(in, in) is semidet.
 
 :- pred pron(mrs_instance).
-:- mode pron(out) is det.
+:- mode pron(in) is det.
 
 :- pred more_comp(mrs_event, mrs_event, mrs_instance).
-:- mode more_comp(in, in, in) is det.
+:- mode more_comp(in, in, in) is semidet.
 
 :- pred rich_a_in(mrs_event, mrs_instance, mrs_instance).
-:- mode rich_a_in(in, in, in) is det.
+:- mode rich_a_in(in, in, in) is semidet. 
 
 :- pred card(mrs_event, mrs_instance, mrs_carg).
 :- mode card(in,in,in) is det.
@@ -271,7 +271,7 @@ hate_v_1(E, I0, I1) :-
 never_a_1(I23s2, Func) :-
   impure unsafe_perform_io(io.print({"never_a_1",I23s2,Func})),
   impure unsafe_perform_io(io.nl),
-  apply(Func) = yes.
+  apply(Func) = no.
 
 :- pragma promise_pure(neg/2).
 neg(E, Func) :-
@@ -281,21 +281,21 @@ neg(E, Func) :-
 
 :- pragma promise_pure(pron/1).
 pron(X16s2) :- 
-  X16s2 = mrs_instance(mrs_carg("pron0")),
   impure unsafe_perform_io(io.print({"pron",X16s2})),
-  impure unsafe_perform_io(io.nl).
+  impure unsafe_perform_io(io.nl),
+  true.
 
 :- pragma promise_pure(more_comp/3).
 more_comp(E0, E1, X0) :- 
   impure unsafe_perform_io(io.print({"more_comp",E0,E1,X0})),
   impure unsafe_perform_io(io.nl),
-  true.
+  false.
 
 :- pragma promise_pure(rich_a_in/3).
 rich_a_in(E0, I0, I1) :-
   impure unsafe_perform_io(io.print({"rich_a_in",E0,I0,I1})),
   impure unsafe_perform_io(io.nl),
-  true.
+  false.
 
 :- pragma promise_pure(card/3).
 card(E, I, C) :- 
@@ -692,7 +692,7 @@ combined1(X14s1, X19s1, X24s1, X32s1, X38s1, X3s1, X46s1, X8s1, I52s1) :-
 :- mode h12s2(in,out,in) is nondet.
 
 :- pred h24s2(mrs_instance, mrs_instance,mrs_instance).
-:- mode h24s2(in,in,in) is det.
+:- mode h24s2(in,in,in) is semidet.
 
 :- pred h30s2(mrs_instance, mrs_instance, mrs_instance).
 :- mode h30s2(out,in,in) is nondet.
@@ -707,7 +707,7 @@ combined1(X14s1, X19s1, X24s1, X32s1, X38s1, X3s1, X46s1, X8s1, I52s1) :-
 :- mode h14s2_1(out,in) is nondet.
 
 :- pred h17s2(mrs_instance). 
-:- mode h17s2(out) is nondet.
+:- mode h17s2(in) is nondet.
 
 :- pred h1s2_0(mrs_instance).
 :- mode h1s2_0(in) is det.
@@ -722,13 +722,13 @@ combined1(X14s1, X19s1, X24s1, X32s1, X38s1, X3s1, X46s1, X8s1, I52s1) :-
 :- mode h1s2_3(in,in,in,in) is semidet.
 
 :- pred h20s2(mrs_instance).
-:- mode h20s2(out) is nondet.
+:- mode h20s2(in) is nondet.
 
 :- pred h25s2_0(mrs_instance).
-:- mode h25s2_0(in) is det.
+:- mode h25s2_0(in) is semidet.
 
 :- pred h25s2_1(mrs_instance,mrs_instance).
-:- mode h25s2_1(in,in) is det.
+:- mode h25s2_1(in,in) is semidet.
 
 :- pred h29s2(mrs_instance, mrs_instance, mrs_instance).
 :- mode h29s2(out,in,in) is nondet.
@@ -740,10 +740,10 @@ combined1(X14s1, X19s1, X24s1, X32s1, X38s1, X3s1, X46s1, X8s1, I52s1) :-
 :- mode h32s2_1(out,in) is nondet.
 
 :- pred h35s2(mrs_instance).
-:- mode h35s2(out) is nondet.
+:- mode h35s2(in) is semidet.
 
 :- pred h38s2(mrs_instance).
-:- mode h38s2(out) is det.
+:- mode h38s2(in) is det.
 
 :- pred h4s2(mrs_instance).
 :- mode h4s2(out) is nondet.
@@ -795,12 +795,12 @@ h11s2(I21s2, X10s2, X16s2) :- def_explicit_q(X10s2,
 h14s2_0(X10s2, X16s2) :- poss(e15s2, X10s2, X16s2).
 h14s2_1(X10s2,I21s2) :- victim_n_of(X10s2, I21s2).
 h17s2(X16s2) :- pronoun_q(X16s2, 
-                         (func) = Ret :- Ret = solutions(pred(Val::out) is nondet :- h20s2(Val)),
+                         (func) = Ret :- Ret = (if h20s2(X16s2) then [X16s2] else []),
                          (func) = Ret :- Ret = (if h19s2 then yes else no)).
 h1s2_0(I8s2) :- always_a_1(I8s2, e9s2).
 h1s2_1 :- and_c_e(e2s2, e9s2, e22s2).
 h1s2_2(X10s2, X3s2) :- hate_v_1(e9s2, X3s2, X10s2).
-h1s2_3(I23s2, I26s2, X28s2, X3s2) :- never_a_1(I23s2, (func) = Ret :- Ret = (if h24s2(I26s2, X28s2, X3s2) then yes else no)).
+h1s2_3(I23s2, I26s2, X28s2, X3s2) :- X28s2 = X3s2, never_a_1(I23s2, (func) = Ret :- Ret = (if h24s2(I26s2, X28s2, X3s2) then yes else no)).
 h20s2(X16s2) :- pron(X16s2).
 h25s2_0(X28s2) :- more_comp(e27s2, e22s2, X28s2).
 h25s2_1(X3s2,I26s2) :- rich_a_in(e22s2, X3s2, I26s2).
@@ -810,7 +810,7 @@ h29s2(X28s2, X34s2, I39s2) :- def_explicit_q(X28s2,
 h32s2_0(X28s2, X34s2) :- poss(e33s2, X28s2, X34s2).
 h32s2_1(X28s2,I39s2) :- victim_n_of(X28s2, I39s2).
 h35s2(X34s2) :- pronoun_q(X34s2, 
-                         (func) = Ret :- Ret = solutions(pred(Val::out) is nondet :- h38s2(Val)),
+                         (func) = Ret :- Ret = (if h38s2(X34s2) then [X34s2] else []),
                          (func) = Ret :- Ret = (if h37s2 then yes else no)).
 h38s2(X34s2) :- pron(X34s2).
 h4s2(X3s2) :- a_q(X3s2, 
@@ -824,6 +824,9 @@ combined2(I8s2, I23s2, I26s2, I39s2, X10s2, X16s2, X28s2, X34s2, X3s2) :-
    I23s2 = mrs_instance(mrs_carg("I23s2")),
    I26s2 = mrs_instance(mrs_carg("I26s2")),
    I39s2 = mrs_instance(mrs_carg("I39s2")),
+   h4s2(X3s2),
+   X16s2 = X3s2,
+   X34s2 = X3s2,
    h11s2(I21s2, X10s2, X16s2),
    h0s2(I8s2, I23s2, I26s2, X10s2, X3s2, X28s2),
    h17s2(X16s2),
@@ -831,7 +834,6 @@ combined2(I8s2, I23s2, I26s2, I39s2, X10s2, X16s2, X28s2, X34s2, X3s2) :-
    h29s2(X28s2, X34s2, I39s2),
    h35s2(X34s2),
    h38s2(X34s2),
-   h4s2(X3s2),
    h7s2(X3s2).
 
 h13s2 :- true.
@@ -1025,7 +1027,7 @@ h18s4 :- true.
 :- mode h11s5(out,in,in) is nondet.
 
 :- pred h14s5(mrs_instance, mrs_instance, mrs_instance).
-:- mode h14s5(in, in, in) is det.
+:- mode h14s5(in, in, in) is semidet.
 
 :- pred h21s5(mrs_instance, mrs_instance).
 :- mode h21s5(out, in) is nondet.
@@ -1037,10 +1039,10 @@ h18s4 :- true.
 :- mode h10s5(out,in,in) is nondet.
 
 :- pred h15s5_0(mrs_instance).
-:- mode h15s5_0(in) is det.
+:- mode h15s5_0(in) is semidet.
 
 :- pred h15s5_1(mrs_instance,mrs_instance).
-:- mode h15s5_1(in,in) is det.
+:- mode h15s5_1(in,in) is semidet.
 
 :- pred h20s5(mrs_instance, mrs_instance).
 :- mode h20s5(out, in) is nondet.
@@ -1117,7 +1119,7 @@ h4s5(X3s5) :- the_q(X3s5,
                    (func) = Ret :- Ret = solutions(pred(Val::out) is nondet :- h7s5(Val)),
                    (func) = Ret :- Ret = (if h6s5 then yes else no)).
 h7s5(X3s5) :- butler_n_1(X3s5).
-h9s5_0(X19s5, X8s5, I17s5) :- neg(e13s5, (func) = Ret :- Ret = (if h14s5(X19s5, X8s5, I17s5) then no else no)). % note forced negation
+h9s5_0(X19s5, X8s5, I17s5) :- X8s5 = X19s5, neg(e13s5, (func) = Ret :- Ret = (if h14s5(X19s5, X8s5, I17s5) then yes else no)). 
 h9s5_1(X8s5) :- person(X8s5).
 h1s5(X3s5, X8s5) :- hate_v_1(e2s5, X3s5, X8s5).
 combined5(X19s5, X25s5, X3s5, X8s5, I17s5) :-
@@ -1337,10 +1339,10 @@ h6s8 :- true.
 :- mode h18s9(in,in) is semidet.
 
 :- pred h21s9(mrs_instance).
-:- mode h21s9(out) is det.
+:- mode h21s9(in) is det.
 
 :- pred h22s9(mrs_instance).
-:- mode h22s9(out) is nondet.
+:- mode h22s9(in) is semidet.
 
 :- pred h4s9.
 :- mode h4s9 is det.
@@ -1380,7 +1382,7 @@ h12s9(X13s9) :- proper_q(X13s9,
 h18s9(X13s9, X20s9) :- kill_v_1(e19s9, X13s9, X20s9).
 h21s9(X20s9) :- pron(X20s9).
 h22s9(X20s9) :- pronoun_q(X20s9, 
-                          (func) = Ret :- Ret = solutions(pred(Val::out) is nondet :- h21s9(Val)),
+                          (func) = Ret :- Ret = (if h21s9(X20s9) then [X20s9] else []),
                           (func) = Ret :- Ret = (if h24s9 then yes else no)).
 h4s9 :- unknown(u5s9, e2s9).
 h6s9(I7s9) :- therefore_a_1(I7s9, (func) = Ret :- Ret = (if h4s9 then yes else no)).
@@ -1391,7 +1393,7 @@ h1s9(X13s9, X20s9, I7s9) :- colon_p_namely(e9s9,
 combined9(X13s9, X20s9) :-
   I7s9 = mrs_instance(mrs_carg("i7s9")),
   h12s9(X13s9),
-  h21s9(X20s9),
+  X20s9 = X13s9,
   h22s9(X20s9),
   h4s9,
   h1s9(X13s9,X20s9,I7s9).
@@ -1513,17 +1515,17 @@ main(!IO) :-
                     )
 	   ,Ret0123456789),
   
-  Out = map(func({X10s0,X16s0,X23s0,X29s0,X3s0,
-                  X14s1, X19s1, X24s1, X32s1, X38s1, X3s1, X46s1, X8s1,
-                  X10s2, X16s2, X28s2, X34s2, X3s2,
-	          X17s3, X22s3, X3s3, X9s3,
-                  X15s4, X3s4, X9s4,
-                  X19s5, X25s5, X3s5, X8s5,
-                  X14s6, X19s6, X3s6, X8s6,
-                  X3s7, X8s7,
-                  X10s8, X3s8,
-                  X13s9, X20s9
-		 }) = Ret :- Ret = {X13s9,X20s9}, Ret0123456789),
+  Out = list.filter_map(func({X10s0,X16s0,X23s0,X29s0,X3s0,
+                         X14s1, X19s1, X24s1, X32s1, X38s1, X3s1, X46s1, X8s1,
+                         X10s2, X16s2, X28s2, X34s2, X3s2,
+                         X17s3, X22s3, X3s3, X9s3,
+                         X15s4, X3s4, X9s4,
+                         X19s5, X25s5, X3s5, X8s5,
+                         X14s6, X19s6, X3s6, X8s6,
+                         X3s7, X8s7,
+                         X10s8, X3s8,
+                         X13s9, X20s9
+		        }) = Ret is semidet :- if X23s0 = X28s2 then Ret = {X13s9,X20s9} else false, Ret0123456789),
   % victim_n_of X10s2: {Agatha,Charles,TheButler}
   % X16s2: pron0
   % victim_n_of X28s2: {Agatha,Charles,TheButler}
@@ -1531,7 +1533,7 @@ main(!IO) :-
   % killer_n_of X3s2: {Agatha,Charles,TheButler,TheKiller}
   % pretty_printer.write_doc(pretty_printer.format(Ret012),!IO),
   % io.nl(!IO),
-  set.list_to_set(Ret0123456789,S),
+  set.list_to_set(Out,S),
   set.to_sorted_list(S,L),
   io.print(L,!IO),
   io.nl(!IO),
