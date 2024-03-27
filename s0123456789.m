@@ -152,7 +152,10 @@ namedPeople(Person) :- Person = mrs_instance(mrs_carg("Agatha")); Person = mrs_i
 
 butler_n_1(Person) :- Person = mrs_instance(mrs_carg("The Butler")) ; namedPeople(Person).
 
-killer_n_1(Person) :- Person = mrs_instance(mrs_carg("The Killer")) ; namedPeople(Person).
+killer_n_1(Person) :- 
+  Person = mrs_instance(mrs_carg("The Killer")) ;
+  Person = mrs_instance(mrs_carg("The Butler")) ;
+  namedPeople(Person).
 
 person(Person) :- butler_n_1(Person); namedPeople(Person).
 
@@ -1396,23 +1399,27 @@ h15s9 :- true.
 h24s9 :- true.
 
 
-:- pred combined01(mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance,
-                   mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance).
-:- mode combined01(out, out, out, out, out, 
-                   out, out, out, out, out, out, out, out, out).
-combined01(X10s0,X16s0,X23s0,X29s0,X3s0, 
-           X14s1,X19s1,X24s1,X32s1,X38s1,X3s1,X46s1,X8s1,I52s1
-	  ) :-
+:- pred combined012(mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance,
+                    mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance,
+                    mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance).
+:- mode combined012(out, out, out, out, out, 
+                    out, out, out, out, out, out, out, out, out,
+                    out, out, out, out, out).
+combined012(X10s0,X16s0,X23s0,X29s0,X3s0, 
+            X14s1,X19s1,X24s1,X32s1,X38s1,X3s1,X46s1,X8s1,I52s1,
+            % I8s2, I23s2, I26s2, I39s2,
+	    X10s2, X16s2, X28s2, X34s2, X3s2
+	   ) :-
    combined0(X10s0,X16s0,X23s0,X29s0,X3s0),
    combined1(X14s1,X19s1,X24s1,X32s1,X38s1,X3s1,X46s1,X8s1,I52s1),
    coref(X23s0,X8s1), % Agatha
    coref(X16s0,X38s1), % Dreadbury
-   coref(X10s0,X32s1) % Mansion
-   .
+   coref(X10s0,X32s1), % Mansion
+   combined2(I8s2, I23s2, I26s2, I39s2, X10s2, X16s2, X28s2, X34s2, X3s2).
 
 :- pred combined(mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance,
                  mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance,
-                 mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance,
+                 mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance,
                  mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance,
                  mrs_instance, mrs_instance, mrs_instance,
                  mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance,
@@ -1423,7 +1430,7 @@ combined01(X10s0,X16s0,X23s0,X29s0,X3s0,
 		 ).
 :- mode combined(out, out, out, out, out, 
                  out, out, out, out, out, out, out, out, out,
-                 out, out, out, out, out, out, out, out, out,
+                 out, out, out, out, out,
                  out, out, out, out, out,
                  out, out, out,
                  out, out, out, out, out,
@@ -1434,7 +1441,7 @@ combined01(X10s0,X16s0,X23s0,X29s0,X3s0,
 		 ).
 combined(X10s0,X16s0,X23s0,X29s0,X3s0, 
          X14s1,X19s1,X24s1,X32s1,X38s1,X3s1,X46s1,X8s1,I52s1,
-         I8s2, I23s2, I26s2, I39s2, X10s2, X16s2, X28s2, X34s2, X3s2,
+         X10s2, X16s2, X28s2, X34s2, X3s2,
          X17s3, X22s3, X3s3, X9s3, I27s3,
          X15s4, X3s4, X9s4,
          X19s5, X25s5, X3s5, X8s5, I17s5,
@@ -1443,9 +1450,9 @@ combined(X10s0,X16s0,X23s0,X29s0,X3s0,
          X10s8, X3s8,
          X13s9, X20s9
 	 ) :-
-   combined01(X10s0,X16s0,X23s0,X29s0,X3s0,
-              X14s1,X19s1,X24s1,X32s1,X38s1,X3s1,X46s1,X8s1,I52s1),
-   combined2(I8s2, I23s2, I26s2, I39s2, X10s2, X16s2, X28s2, X34s2, X3s2),
+   combined012(X10s0,X16s0,X23s0,X29s0,X3s0,
+               X14s1,X19s1,X24s1,X32s1,X38s1,X3s1,X46s1,X8s1,I52s1,
+               X10s2, X16s2, X28s2, X34s2, X3s2),
    combined3(X17s3, X22s3, X3s3, X9s3, I27s3),
    coref(X23s0,X17s3), % Agatha
    coref(X24s1,X3s3), % Charles
@@ -1481,7 +1488,7 @@ main(!IO) :-
 %		  }::out) is nondet :- 
 %             combined(X10s0,X16s0,X23s0,X29s0,X3s0,
 %                      X14s1,X19s1,X24s1,X32s1,X38s1,X3s1,X46s1,X8s1,I52s1,
-%                      I8s2, I23s2, I26s2, I39s2, X10s2, X16s2, X28s2, X34s2, X3s2,
+%                      X10s2, X16s2, X28s2, X34s2, X3s2,
 %                      X17s3, X22s3, X3s3, X9s3, I27s3,
 %                      X15s4, X3s4, X9s4,
 %                      X19s5, X25s5, X3s5, X8s5, I17s5,
@@ -1495,15 +1502,18 @@ main(!IO) :-
 %   io.nl(!IO).
 
   solutions(pred({X10s0,X16s0,X23s0,X29s0,X3s0,
-                  X14s1,X19s1,X24s1,X32s1,X38s1,X3s1,X46s1,X8s1,I52s1
+                  X14s1,X19s1,X24s1,X32s1,X38s1,X3s1,X46s1,X8s1,I52s1,
+                  X10s2, X16s2, X28s2, X34s2, X3s2
 	         }::out) is nondet :- 
-	    combined01(X10s0,X16s0,X23s0,X29s0,X3s0,
-                       X14s1,X19s1,X24s1,X32s1,X38s1,X3s1,X46s1,X8s1,I52s1
-	   ),Ret01),
-  pretty_printer.write_doc(pretty_printer.format(Ret01),!IO),
+	    combined012(X10s0,X16s0,X23s0,X29s0,X3s0,
+                        X14s1,X19s1,X24s1,X32s1,X38s1,X3s1,X46s1,X8s1,I52s1,
+                        X10s2, X16s2, X28s2, X34s2, X3s2)
+	   ,Ret012),
+  
+  pretty_printer.write_doc(pretty_printer.format(Ret012),!IO),
   io.nl(!IO),
-  length(Ret01,Len01),
-  io.print(Len01,!IO),
+  length(Ret012,Len012),
+  io.print(Len012,!IO),
   io.nl(!IO).
 %  {X10s0,X16s0,X23s0,X29s0,X3s0} = det_head(Ret0),
 %  solutions(pred({X14s1, X19s1, X24s1, X32s1, X38s1, X3s1, X46s1, X8s1, I52s1}::out) is nondet :-
