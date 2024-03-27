@@ -126,7 +126,7 @@
 :- mode aunt_n_of(out,in) is nondet.
 
 :- pred except_p(mrs_event, mrs_instance, mrs_instance).
-:- mode except_p(in, in, in) is det.
+:- mode except_p(in, in, in) is semidet.
 
 :- pred neg(mrs_event, (func) = bool).
 :- mode neg(in, in) is semidet.
@@ -277,7 +277,7 @@ never_a_1(I23s2, Func) :-
 neg(E, Func) :-
   impure unsafe_perform_io(io.print({"neg",E,Func})),
   impure unsafe_perform_io(io.nl),
-  apply(Func) = yes.
+  apply(Func) = no.
 
 :- pragma promise_pure(pron/1).
 pron(X16s2) :- 
@@ -331,7 +331,7 @@ people_n_of(I0, I1) :-
 except_p(E0, I0, I1) :-
   impure unsafe_perform_io(io.print({"except_p",E0,I0,I1})),
   impure unsafe_perform_io(io.nl),
-  true.
+  not I0 = I1.
 
 :- pragma promise_pure(unknown/2).
 unknown(U, E) :- 
@@ -942,7 +942,8 @@ combined3(X17s3, X22s3, X3s3, X9s3, I27s3) :-
   h10s3(X17s3,X9s3),
   h26s3(X22s3,I27s3),
   h4s3(X3s3),
-  h1s3(X3s3, X9s3).
+  h1s3(X3s3, X9s3),
+  X22s3 = X17s3. % aunt_n_of should always be Agatha
 
 h6s3 :- true.
 h12s3 :- true.
@@ -959,7 +960,7 @@ h25s3 :- true.
 :- mode h7s4(out) is det.
 
 :- pred h10s4_0(mrs_instance, mrs_instance).
-:- mode h10s4_0(in, in) is det.
+:- mode h10s4_0(in, in) is semidet.
 
 :- pred h10s4_1(mrs_instance).
 :- mode h10s4_1(out) is nondet.
@@ -1116,7 +1117,7 @@ h4s5(X3s5) :- the_q(X3s5,
                    (func) = Ret :- Ret = solutions(pred(Val::out) is nondet :- h7s5(Val)),
                    (func) = Ret :- Ret = (if h6s5 then yes else no)).
 h7s5(X3s5) :- butler_n_1(X3s5).
-h9s5_0(X19s5, X8s5, I17s5) :- neg(e13s5, (func) = Ret :- Ret = (if h14s5(X19s5, X8s5, I17s5) then yes else no)).
+h9s5_0(X19s5, X8s5, I17s5) :- neg(e13s5, (func) = Ret :- Ret = (if h14s5(X19s5, X8s5, I17s5) then no else no)). % note forced negation
 h9s5_1(X8s5) :- person(X8s5).
 h1s5(X3s5, X8s5) :- hate_v_1(e2s5, X3s5, X8s5).
 combined5(X19s5, X25s5, X3s5, X8s5, I17s5) :-
@@ -1223,7 +1224,8 @@ combined6(X14s6, X19s6, X3s6, X8s6, I24s6) :-
   h20s6(X19s6, I24s6),
   h13s6(X14s6, X19s6),
   h10s6(X14s6, X8s6),
-  h4s6(X3s6).
+  h4s6(X3s6),
+  X19s6 = X14s6. % aunt_n_of(Agatha)
 
 h6s6 :- true.
 h12s6 :- true.
@@ -1399,60 +1401,46 @@ h15s9 :- true.
 h24s9 :- true.
 
 
-:- pred combined012(mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance,
-                    mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance,
-                    mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance).
-:- mode combined012(out, out, out, out, out, 
-                    out, out, out, out, out, out, out, out, out,
-                    out, out, out, out, out).
-combined012(X10s0,X16s0,X23s0,X29s0,X3s0, 
-            X14s1,X19s1,X24s1,X32s1,X38s1,X3s1,X46s1,X8s1,I52s1,
-            % I8s2, I23s2, I26s2, I39s2,
-	    X10s2, X16s2, X28s2, X34s2, X3s2
-	   ) :-
-   combined0(X10s0,X16s0,X23s0,X29s0,X3s0),
-   combined1(X14s1,X19s1,X24s1,X32s1,X38s1,X3s1,X46s1,X8s1,I52s1),
-   coref(X23s0,X8s1), % Agatha
-   coref(X16s0,X38s1), % Dreadbury
-   coref(X10s0,X32s1), % Mansion
-   combined2(I8s2, I23s2, I26s2, I39s2, X10s2, X16s2, X28s2, X34s2, X3s2).
-
 :- pred combined(mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance,
-                 mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance,
+                 mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance,
                  mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance,
-                 mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance,
+                 mrs_instance, mrs_instance, mrs_instance, mrs_instance,
                  mrs_instance, mrs_instance, mrs_instance,
-                 mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance,
-                 mrs_instance, mrs_instance, mrs_instance, mrs_instance, mrs_instance,
+                 mrs_instance, mrs_instance, mrs_instance, mrs_instance,
+                 mrs_instance, mrs_instance, mrs_instance, mrs_instance,
                  mrs_instance, mrs_instance,
                  mrs_instance, mrs_instance,
                  mrs_instance, mrs_instance
-		 ).
+                ).
 :- mode combined(out, out, out, out, out, 
-                 out, out, out, out, out, out, out, out, out,
+                 out, out, out, out, out, out, out, out, 
                  out, out, out, out, out,
-                 out, out, out, out, out,
-                 out, out, out,
-                 out, out, out, out, out,
-                 out, out, out, out, out,
-                 out, out,
-                 out, out,
-                 out, out
-		 ).
-combined(X10s0,X16s0,X23s0,X29s0,X3s0, 
-         X14s1,X19s1,X24s1,X32s1,X38s1,X3s1,X46s1,X8s1,I52s1,
-         X10s2, X16s2, X28s2, X34s2, X3s2,
-         X17s3, X22s3, X3s3, X9s3, I27s3,
+                 out, out, out, out,
+		 out, out, out,
+                 out, out, out, out,
+                 out, out, out, out,
+		 out, out,
+		 out, out,
+		 out, out
+		).
+combined(X10s0, X16s0, X23s0, X29s0, X3s0, 
+         X14s1, X19s1, X24s1, X32s1, X38s1, X3s1, X46s1, X8s1,
+	 X10s2, X16s2, X28s2, X34s2, X3s2,
+	 X17s3, X22s3, X3s3, X9s3,
          X15s4, X3s4, X9s4,
-         X19s5, X25s5, X3s5, X8s5, I17s5,
-         X14s6, X19s6, X3s6, X8s6, I24s6,
-         X3s7, X8s7,
+         X19s5, X25s5, X3s5, X8s5,
+         X14s6, X19s6, X3s6, X8s6,
+	 X3s7, X8s7,
          X10s8, X3s8,
          X13s9, X20s9
-	 ) :-
-   combined012(X10s0,X16s0,X23s0,X29s0,X3s0,
-               X14s1,X19s1,X24s1,X32s1,X38s1,X3s1,X46s1,X8s1,I52s1,
-               X10s2, X16s2, X28s2, X34s2, X3s2),
+	) :-
+   combined0(X10s0,X16s0,X23s0,X29s0,X3s0),
+   combined1(X14s1, X19s1, X24s1, X32s1, X38s1, X3s1, X46s1, X8s1, I52s1),
+   coref(X23s0,X8s1), % Agatha
+   coref(X16s0,X38s1), % Dreadbury
+   coref(X10s0,X32s1), % Mansion
+   combined2(I8s2, I23s2, I26s2, I39s2, X10s2, X16s2, X28s2, X34s2, X3s2),
+   X10s2 = X28s2, % victims refer to same people, for same killer
    combined3(X17s3, X22s3, X3s3, X9s3, I27s3),
    coref(X23s0,X17s3), % Agatha
    coref(X24s1,X3s3), % Charles
@@ -1502,18 +1490,53 @@ main(!IO) :-
 %   io.nl(!IO).
 
   solutions(pred({X10s0,X16s0,X23s0,X29s0,X3s0,
-                  X14s1,X19s1,X24s1,X32s1,X38s1,X3s1,X46s1,X8s1,I52s1,
-                  X10s2, X16s2, X28s2, X34s2, X3s2
+                  X14s1, X19s1, X24s1, X32s1, X38s1, X3s1, X46s1, X8s1,
+                  X10s2, X16s2, X28s2, X34s2, X3s2,
+	          X17s3, X22s3, X3s3, X9s3,
+                  X15s4, X3s4, X9s4,
+                  X19s5, X25s5, X3s5, X8s5,
+                  X14s6, X19s6, X3s6, X8s6,
+                  X3s7, X8s7,
+                  X10s8, X3s8,
+                  X13s9, X20s9
 	         }::out) is nondet :- 
-	    combined012(X10s0,X16s0,X23s0,X29s0,X3s0,
-                        X14s1,X19s1,X24s1,X32s1,X38s1,X3s1,X46s1,X8s1,I52s1,
-                        X10s2, X16s2, X28s2, X34s2, X3s2)
-	   ,Ret012),
+	    combined(X10s0,X16s0,X23s0,X29s0,X3s0,
+                     X14s1, X19s1, X24s1, X32s1, X38s1, X3s1, X46s1, X8s1,
+                     X10s2, X16s2, X28s2, X34s2, X3s2,
+	             X17s3, X22s3, X3s3, X9s3,
+                     X15s4, X3s4, X9s4,
+                     X19s5, X25s5, X3s5, X8s5,
+                     X14s6, X19s6, X3s6, X8s6,
+                     X3s7, X8s7,
+                     X10s8, X3s8,
+                     X13s9, X20s9
+                    )
+	   ,Ret0123456789),
   
-  pretty_printer.write_doc(pretty_printer.format(Ret012),!IO),
+  Out = map(func({X10s0,X16s0,X23s0,X29s0,X3s0,
+                  X14s1, X19s1, X24s1, X32s1, X38s1, X3s1, X46s1, X8s1,
+                  X10s2, X16s2, X28s2, X34s2, X3s2,
+	          X17s3, X22s3, X3s3, X9s3,
+                  X15s4, X3s4, X9s4,
+                  X19s5, X25s5, X3s5, X8s5,
+                  X14s6, X19s6, X3s6, X8s6,
+                  X3s7, X8s7,
+                  X10s8, X3s8,
+                  X13s9, X20s9
+		 }) = Ret :- Ret = {X13s9,X20s9}, Ret0123456789),
+  % victim_n_of X10s2: {Agatha,Charles,TheButler}
+  % X16s2: pron0
+  % victim_n_of X28s2: {Agatha,Charles,TheButler}
+  % X34s2: pron0
+  % killer_n_of X3s2: {Agatha,Charles,TheButler,TheKiller}
+  % pretty_printer.write_doc(pretty_printer.format(Ret012),!IO),
+  % io.nl(!IO),
+  set.list_to_set(Ret0123456789,S),
+  set.to_sorted_list(S,L),
+  io.print(L,!IO),
   io.nl(!IO),
-  length(Ret012,Len012),
-  io.print(Len012,!IO),
+  length(L,Len),
+  io.print(Len,!IO),
   io.nl(!IO).
 %  {X10s0,X16s0,X23s0,X29s0,X3s0} = det_head(Ret0),
 %  solutions(pred({X14s1, X19s1, X24s1, X32s1, X38s1, X3s1, X46s1, X8s1, I52s1}::out) is nondet :-
